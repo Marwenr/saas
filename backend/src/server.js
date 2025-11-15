@@ -83,23 +83,31 @@ fastify.setErrorHandler((error, request, reply) => {
 // Start server
 export async function start() {
   try {
-    // Connect to MongoDB
-    await connectDB();
-
-    // Register plugins
+    // Register plugins first (health check doesn't need DB)
     await registerPlugins();
 
-    // Register routes
+    // Register routes (including health check)
     await registerRoutes();
 
-    // Start server
+    // Start server first (so health checks can pass)
     const port = process.env.PORT || 3001;
     const host = process.env.HOST || '0.0.0.0';
 
     await fastify.listen({ port, host });
     fastify.log.info(`Server listening on http://${host}:${port}`);
+
+    // Connect to MongoDB in background (with retries)
+    try {
+      await connectDB();
+    } catch (err) {
+      fastify.log.error(
+        'MongoDB connection failed, but server is running:',
+        err
+      );
+      // Server continues running - MongoDB will reconnect when available
+    }
   } catch (err) {
-    fastify.log.error(err);
+    fastify.log.error('Server startup error:', err);
     process.exit(1);
   }
 }
