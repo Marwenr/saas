@@ -16,6 +16,9 @@ COPY shared/package.json ./shared/
 
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts
 
+# Ensure node_modules directories exist (pnpm may not create them for packages without deps)
+RUN mkdir -p /app/backend/node_modules /app/shared/node_modules
+
 # Stage 3: Production runner
 FROM base AS runner
 ENV NODE_ENV production
@@ -23,7 +26,7 @@ ENV NODE_ENV production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 fastify
 
-# Copy dependencies
+# Copy dependencies (directories are ensured to exist in deps stage)
 COPY --from=deps --chown=fastify:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=fastify:nodejs /app/backend/node_modules ./backend/node_modules
 COPY --from=deps --chown=fastify:nodejs /app/shared/node_modules ./shared/node_modules

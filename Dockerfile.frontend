@@ -16,6 +16,9 @@ COPY shared/package.json ./shared/
 
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
+# Ensure node_modules directories exist (pnpm may not create them for packages without deps)
+RUN mkdir -p /app/frontend/node_modules /app/shared/node_modules
+
 # Stage 3: Build application
 FROM base AS builder
 ENV NODE_ENV production
