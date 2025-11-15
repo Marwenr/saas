@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login } from '../../lib/api';
+import { register } from '../../lib/api';
 
 /**
- * Login page
+ * Register page
  */
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,11 +21,11 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      await register(email, password, name);
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err.message || 'Login failed. Please check your credentials.');
+      setError(err.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -35,11 +36,9 @@ export default function LoginPage() {
       <div className="max-w-md mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
-            Welcome Back
+            Create Account
           </h1>
-          <p className="text-[var(--text-secondary)]">
-            Sign in to your account to continue
-          </p>
+          <p className="text-[var(--text-secondary)]">Sign up to get started</p>
         </div>
 
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-8 shadow-lg">
@@ -50,6 +49,25 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium text-[var(--text-primary)] mb-2"
+              >
+                Name (optional)
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                disabled={loading}
+                className="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="Your name"
+              />
+            </div>
+
             <div>
               <label
                 htmlFor="email"
@@ -85,36 +103,13 @@ export default function LoginPage() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 disabled={loading}
+                minLength={6}
                 className="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="••••••••"
               />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-[var(--border-color)] rounded"
-                  disabled={loading}
-                />
-                <label
-                  htmlFor="remember-me"
-                  className="ml-2 block text-sm text-[var(--text-secondary)]"
-                >
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-                >
-                  Forgot password?
-                </a>
-              </div>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                Must be at least 6 characters
+              </p>
             </div>
 
             <div>
@@ -123,19 +118,19 @@ export default function LoginPage() {
                 disabled={loading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Signing in...' : 'Sign in'}
+                {loading ? 'Creating account...' : 'Sign up'}
               </button>
             </div>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-[var(--text-secondary)]">
-              Don't have an account?{' '}
+              Already have an account?{' '}
               <a
-                href="/register"
+                href="/login"
                 className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
               >
-                Sign up
+                Sign in
               </a>
             </p>
           </div>
