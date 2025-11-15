@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB database service
   mongodb:
@@ -10,8 +8,6 @@ services:
       - '27017:27017'
     environment:
       MONGO_INITDB_DATABASE: saas-starter
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-changeme}
     volumes:
       - mongodb_data:/data/db
     networks:
@@ -36,7 +32,7 @@ services:
       NODE_ENV: production
       PORT: 4000
       HOST: 0.0.0.0
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-changeme}@mongodb:27017/saas-starter?authSource=admin
+      MONGODB_URI: mongodb://mongodb:27017/saas-starter
       FRONTEND_URL: http://localhost:3000
       JWT_SECRET: ${JWT_SECRET:-changeme-in-production}
       COOKIE_SECRET: ${COOKIE_SECRET:-changeme-in-production}
