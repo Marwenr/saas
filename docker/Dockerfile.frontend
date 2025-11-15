@@ -1,0 +1,48 @@
+# Frontend Dockerfile
+# Build and serve Next.js application
+FROM node:18-alpine AS base
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Set working directory
+WORKDIR /app
+
+# Copy workspace files
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
+
+# Install dependencies
+FROM base AS deps
+RUN pnpm install --frozen-lockfile
+
+# Build application
+FROM base AS builder
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
+COPY --from=deps /app/shared/node_modules ./shared/node_modules
+COPY . .
+
+RUN pnpm --filter @saas/frontend build
+
+# Production image
+FROM base AS runner
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/frontend/public ./frontend/public
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/static ./frontend/.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "frontend/server.js"]
+

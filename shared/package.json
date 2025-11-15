@@ -1,0 +1,13 @@
+{
+  "name": "@saas/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities and constants for SaaS monorepo",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint ."
+  },
+  "keywords": ["shared", "utils"],
+  "license": "MIT"
+}
+

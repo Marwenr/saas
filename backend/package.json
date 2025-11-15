@@ -1,0 +1,22 @@
+{
+  "name": "@saas/backend",
+  "version": "1.0.0",
+  "description": "Fastify backend server with MongoDB and Mongoose",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "lint": "eslint ."
+  },
+  "keywords": ["backend", "fastify", "mongodb"],
+  "license": "MIT",
+  "dependencies": {
+    "@saas/shared": "workspace:*",
+    "fastify": "^4.24.3",
+    "mongoose": "^8.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {}
+}
+

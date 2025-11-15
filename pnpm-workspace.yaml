@@ -1,0 +1,7 @@
+# pnpm workspace configuration
+# Defines which packages are part of the monorepo
+packages:
+  - 'frontend'
+  - 'backend'
+  - 'shared'
+
