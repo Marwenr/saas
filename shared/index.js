@@ -3,6 +3,11 @@
  * This module exports common utilities and constants used across frontend and backend
  */
 
+// Re-export all modules
+export * from './api.js';
+export * from './constants.js';
+export * from './validators.js';
+
 // Constants
 export const API_VERSION = 'v1';
 export const DEFAULT_PORT = {
@@ -24,4 +29,3 @@ export default {
   DEFAULT_PORT,
   log,
 };
-
