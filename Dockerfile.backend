@@ -1,0 +1,48 @@
+# Backend Dockerfile - Production-ready Fastify/Node.js
+# Multi-stage build for optimal image size
+
+# Stage 1: Base image with pnpm
+FROM node:18-alpine AS base
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Stage 2: Install dependencies
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY backend/package.json ./backend/
+COPY shared/package.json ./shared/
+
+RUN pnpm install --frozen-lockfile --prod
+
+# Stage 3: Production runner
+FROM base AS runner
+ENV NODE_ENV production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 fastify
+
+# Copy dependencies
+COPY --from=deps --chown=fastify:nodejs /app/node_modules ./node_modules
+COPY --from=deps --chown=fastify:nodejs /app/backend/node_modules ./backend/node_modules
+COPY --from=deps --chown=fastify:nodejs /app/shared/node_modules ./shared/node_modules
+
+# Copy application code
+COPY --chown=fastify:nodejs backend ./backend
+COPY --chown=fastify:nodejs shared ./shared
+
+USER fastify
+
+EXPOSE 4000
+
+ENV PORT 4000
+ENV HOST "0.0.0.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:4000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+
+# Start the backend server
+CMD ["node", "backend/src/index.js"]
+

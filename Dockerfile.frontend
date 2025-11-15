@@ -1,0 +1,62 @@
+# Frontend Dockerfile - Production-ready Next.js
+# Multi-stage build for optimal image size
+
+# Stage 1: Base image with pnpm
+FROM node:18-alpine AS base
+RUN apk add --no-cache libc6-compat
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /app
+
+# Stage 2: Install dependencies
+FROM base AS deps
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+COPY frontend/package.json ./frontend/
+COPY shared/package.json ./shared/
+
+RUN pnpm install --frozen-lockfile
+
+# Stage 3: Build application
+FROM base AS builder
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/frontend/node_modules ./frontend/node_modules
+COPY --from=deps /app/shared/node_modules ./shared/node_modules
+
+COPY . .
+
+# Build the Next.js application
+RUN pnpm --filter @saas/frontend build
+
+# Stage 4: Production runner
+FROM base AS runner
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy necessary files from builder
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/public ./frontend/public
+
+# Set the correct permission for prerender cache
+RUN mkdir -p .next/cache
+RUN chown -R nextjs:nodejs .next
+
+# Copy the standalone build (Next.js standalone includes everything needed)
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/frontend/.next/static ./frontend/.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Start the Next.js server
+# Next.js standalone output places server.js at the root of the standalone directory
+CMD ["node", "frontend/server.js"]
+
