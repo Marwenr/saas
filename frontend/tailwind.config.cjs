@@ -10,7 +10,34 @@ module.exports = {
     extend: {
       // Custom color palette
       colors: {
+        // Main app color - purple-600
+        purple: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea', // Main app color
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+          950: '#3b0764',
+        },
         primary: {
+          50: '#faf5ff',
+          100: '#f3e8ff',
+          200: '#e9d5ff',
+          300: '#d8b4fe',
+          400: '#c084fc',
+          500: '#a855f7',
+          600: '#9333ea', // Main app color - matches purple-600
+          700: '#7e22ce',
+          800: '#6b21a8',
+          900: '#581c87',
+          950: '#3b0764',
+        },
+        secondary: {
           50: '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
@@ -22,19 +49,6 @@ module.exports = {
           800: '#075985',
           900: '#0c4a6e',
           950: '#082f49',
-        },
-        secondary: {
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7e22ce',
-          800: '#6b21a8',
-          900: '#581c87',
-          950: '#3b0764',
         },
         success: {
           50: '#f0fdf4',
@@ -94,6 +108,10 @@ module.exports = {
         '18': '4.5rem',
         '88': '22rem',
         '128': '32rem',
+      },
+      // Custom background gradients
+      backgroundImage: {
+        'light-gradient': 'linear-gradient(237deg, rgba(231, 224, 254, 1) 0%, rgba(255, 255, 255, 1) 20%, rgba(255, 255, 255, 1) 80%, rgba(231, 224, 254, 1) 100%)',
       },
     },
   },

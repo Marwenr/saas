@@ -9,7 +9,7 @@ import User from '../models/User.js';
 export async function authenticate(request, reply) {
   try {
     await request.jwtVerify();
-  } catch (err) {
+  } catch (_err) {
     reply.code(401).send({
       error: 'Unauthorized - Invalid or missing token',
     });
@@ -20,6 +20,6 @@ export async function authenticate(request, reply) {
  * Get user from JWT token
  */
 export async function getUserFromToken(request) {
-  const userId = request.user.id;
+  const userId = request.user.userId;
   return User.findById(userId);
 }

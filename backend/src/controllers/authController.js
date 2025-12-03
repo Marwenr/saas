@@ -34,12 +34,19 @@ export async function register(request, reply) {
 
     // Generate tokens
     const accessToken = request.server.jwt.sign(
-      { id: user._id, email: user.email },
+      {
+        userId: user._id,
+        companyId: user.companyId ? user.companyId.toString() : null,
+        role: user.role || 'owner',
+      },
       { expiresIn: '15m' }
     );
 
     const refreshToken = request.server.jwt.sign(
-      { id: user._id },
+      {
+        userId: user._id,
+        companyId: user.companyId ? user.companyId.toString() : null,
+      },
       { expiresIn: '7d' }
     );
 
@@ -91,7 +98,9 @@ export async function login(request, reply) {
     }
 
     // Find user and include password
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email })
+      .select('+password')
+      .populate('companyId');
     if (!user) {
       return reply.code(401).send({
         error: 'Invalid email or password',
@@ -108,12 +117,19 @@ export async function login(request, reply) {
 
     // Generate tokens
     const accessToken = request.server.jwt.sign(
-      { id: user._id, email: user.email },
+      {
+        userId: user._id,
+        companyId: user.companyId ? user.companyId.toString() : null,
+        role: user.role || 'owner',
+      },
       { expiresIn: '15m' }
     );
 
     const refreshToken = request.server.jwt.sign(
-      { id: user._id },
+      {
+        userId: user._id,
+        companyId: user.companyId ? user.companyId.toString() : null,
+      },
       { expiresIn: '7d' }
     );
 
@@ -134,14 +150,33 @@ export async function login(request, reply) {
       path: '/',
     });
 
-    return reply.send({
-      message: 'Login successful',
+    // Build response
+    const response = {
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role || 'owner',
+        companyId: user.companyId ? user.companyId._id.toString() : null,
       },
-    });
+    };
+
+    // Include company information if user has a company
+    if (user.companyId) {
+      response.company = {
+        id: user.companyId._id,
+        name: user.companyId.name,
+        email: user.companyId.email,
+        phone: user.companyId.phone,
+        address: user.companyId.address,
+        country: user.companyId.country,
+        taxId: user.companyId.taxId,
+        subscriptionPlan: user.companyId.subscriptionPlan,
+        isActive: user.companyId.isActive,
+      };
+    }
+
+    return reply.send(response);
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({
@@ -165,7 +200,7 @@ export async function refresh(request, reply) {
 
     // Verify refresh token
     const decoded = request.server.jwt.verify(refreshToken);
-    const user = await User.findById(decoded.id);
+    const user = await User.findById(decoded.userId);
 
     if (!user) {
       return reply.code(401).send({
@@ -175,7 +210,11 @@ export async function refresh(request, reply) {
 
     // Generate new access token
     const accessToken = request.server.jwt.sign(
-      { id: user._id, email: user.email },
+      {
+        userId: user._id,
+        companyId: user.companyId ? user.companyId.toString() : null,
+        role: user.role || 'owner',
+      },
       { expiresIn: '15m' }
     );
 
@@ -204,7 +243,7 @@ export async function refresh(request, reply) {
  */
 export async function me(request, reply) {
   try {
-    const user = await User.findById(request.user.id);
+    const user = await User.findById(request.user.userId).populate('companyId');
 
     if (!user) {
       return reply.code(404).send({
@@ -212,15 +251,34 @@ export async function me(request, reply) {
       });
     }
 
-    return reply.send({
+    const response = {
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role || 'owner',
+        companyId: user.companyId ? user.companyId._id.toString() : null,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },
-    });
+    };
+
+    // Include company information if user has a company
+    if (user.companyId) {
+      response.company = {
+        id: user.companyId._id,
+        name: user.companyId.name,
+        email: user.companyId.email,
+        phone: user.companyId.phone,
+        address: user.companyId.address,
+        country: user.companyId.country,
+        taxId: user.companyId.taxId,
+        subscriptionPlan: user.companyId.subscriptionPlan,
+        isActive: user.companyId.isActive,
+      };
+    }
+
+    return reply.send(response);
   } catch (error) {
     request.log.error(error);
     return reply.code(500).send({
@@ -233,10 +291,28 @@ export async function me(request, reply) {
  * Logout user
  */
 export async function logout(request, reply) {
-  reply.clearCookie('accessToken', { path: '/' });
-  reply.clearCookie('refreshToken', { path: '/' });
+  try {
+    // Clear cookies with the same options used in login/register
+    // This ensures cookies are properly cleared regardless of their current state
+    reply.clearCookie('accessToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
 
-  return reply.send({
-    message: 'Logout successful',
-  });
+    reply.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    return reply.send({ success: true });
+  } catch (err) {
+    request.log.error({ err }, 'Error during logout');
+    // Even if something goes wrong, we don't want to block logout from frontend
+    // Return success to ensure idempotency
+    return reply.send({ success: true });
+  }
 }

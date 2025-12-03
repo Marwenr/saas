@@ -2,13 +2,22 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { login } from '../../lib/api';
+import { useAuth } from '../../lib/useAuth';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import PageContainer from '../../components/PageContainer';
+import Input from '../../components/Input';
 
 /**
- * Login page
+ * Login page (multi-tenant aware)
+ *
+ * After successful login, the backend sets httpOnly cookies with JWT tokens
+ * containing user ID, companyId, and role. The auth state is automatically
+ * updated via the global AuthContext.
  */
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth(); // Get login function from auth context
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,7 +29,10 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Login sets httpOnly cookies with JWT tokens and updates global auth state
       await login(email, password);
+
+      // Redirect to dashboard/home
       router.push('/');
       router.refresh();
     } catch (err) {
@@ -31,18 +43,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="py-12">
-      <div className="max-w-md mx-auto">
+    <PageContainer centered>
+      <div className="max-w-md w-full mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
+          <h1 className="text-3xl font-bold text-purple-900 dark:text-purple-100 mb-2">
             Welcome Back
           </h1>
-          <p className="text-[var(--text-secondary)]">
+          <p className="text-purple-700 dark:text-purple-300">
             Sign in to your account to continue
           </p>
         </div>
 
-        <div className="bg-[var(--bg-secondary)] border border-[var(--border-color)] rounded-lg p-8 shadow-lg">
+        <Card>
           {error && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm">
               {error}
@@ -50,45 +62,29 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-[var(--text-primary)] mb-2"
-              >
-                Email address
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                disabled={loading}
-                className="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Input
+              type="email"
+              id="email"
+              name="email"
+              label="Email address"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              disabled={loading}
+            />
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-[var(--text-primary)] mb-2"
-              >
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                disabled={loading}
-                className="w-full px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="••••••••"
-              />
-            </div>
+            <Input
+              type="password"
+              id="password"
+              name="password"
+              label="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              disabled={loading}
+            />
 
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -96,12 +92,12 @@ export default function LoginPage() {
                   id="remember-me"
                   name="remember-me"
                   type="checkbox"
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-[var(--border-color)] rounded"
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-purple-300 dark:border-purple-700 rounded"
                   disabled={loading}
                 />
                 <label
                   htmlFor="remember-me"
-                  className="ml-2 block text-sm text-[var(--text-secondary)]"
+                  className="ml-2 block text-sm text-purple-700 dark:text-purple-300"
                 >
                   Remember me
                 </label>
@@ -110,7 +106,7 @@ export default function LoginPage() {
               <div className="text-sm">
                 <a
                   href="#"
-                  className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                  className="font-medium text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors"
                 >
                   Forgot password?
                 </a>
@@ -118,29 +114,45 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <button
+              <Button
                 type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                variant="primary"
+                size="md"
+                loading={loading}
+                fullWidth
               >
                 {loading ? 'Signing in...' : 'Sign in'}
-              </button>
+              </Button>
             </div>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-[var(--text-secondary)]">
-              Don&apos;t have an account?{' '}
-              <a
-                href="/register"
-                className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-              >
-                Sign up
-              </a>
-            </p>
+          <div className="mt-6 pt-6 border-t border-purple-200 dark:border-purple-800">
+            <Button
+              variant="secondary"
+              size="md"
+              fullWidth
+              onClick={() => router.push('/register')}
+              rightIcon={
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7l5 5m0 0l-5 5m5-5H6"
+                  />
+                </svg>
+              }
+            >
+              Create Your Shop
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

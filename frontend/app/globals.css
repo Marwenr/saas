@@ -33,8 +33,20 @@
 
 /* Base styles */
 @layer base {
+  html {
+    @apply min-h-full;
+  }
+  
   body {
-    @apply bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-200;
+    @apply text-[var(--text-primary)] transition-colors duration-200 min-h-full;
+  }
+  
+  html:not(.dark) body {
+    @apply bg-light-gradient;
+  }
+  
+  html.dark body {
+    @apply bg-[var(--bg-primary)];
   }
 }
 

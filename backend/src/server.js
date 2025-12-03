@@ -8,7 +8,16 @@ import dotenv from 'dotenv';
 import Fastify from 'fastify';
 import mongoose from 'mongoose';
 
+import aiRoutes from './routes/aiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import companyRoutes from './routes/companyRoutes.js';
+import customerRoutes from './routes/customerRoutes.js';
+import inventoryRoutes from './routes/inventoryRoutes.js';
+import posRoutes from './routes/posRoutes.js';
+import productRoutes from './routes/productRoutes.js';
+import purchaseRoutes from './routes/purchaseRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import supplierRoutes from './routes/supplierRoutes.js';
 import { connectDB } from './utils/db.js';
 
 // Load environment variables
@@ -47,12 +56,21 @@ async function registerPlugins() {
 // Register routes
 async function registerRoutes() {
   // Health check
-  fastify.get('/health', async (request, reply) => {
+  fastify.get('/health', async (_request, _reply) => {
     return { status: 'ok', timestamp: new Date().toISOString() };
   });
 
   // API routes
   await fastify.register(authRoutes, { prefix: '/api/auth' });
+  await fastify.register(companyRoutes, { prefix: '/api/company' });
+  await fastify.register(productRoutes, { prefix: '/api/products' });
+  await fastify.register(inventoryRoutes, { prefix: '/api/inventory' });
+  await fastify.register(posRoutes, { prefix: '/api/pos' });
+  await fastify.register(supplierRoutes, { prefix: '/api/suppliers' });
+  await fastify.register(purchaseRoutes, { prefix: '/api/purchases' });
+  await fastify.register(customerRoutes, { prefix: '/api/clients' });
+  await fastify.register(reportRoutes, { prefix: '/api/reports' });
+  await fastify.register(aiRoutes, { prefix: '/api/ai' });
 }
 
 // Global error handler

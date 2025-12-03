@@ -1,38 +1,37 @@
 import './globals.css';
 import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import Container from '../components/Container';
+import LayoutContent from '../components/LayoutContent';
+import { Providers } from '../components/Providers';
+import ConditionalContainer from '../components/ConditionalContainer';
+import PageBackground from '../components/PageBackground';
 
 /**
  * Root layout for Next.js App Router
  * Assembles navbar + sidebar + container
  */
 export const metadata = {
-  title: 'SaaS Starter',
-  description: 'Clean, flexible SaaS starter monorepo',
+  title: 'CloudERP - Manage Your Entire Business From One Platform',
+  description:
+    'A smart ERP system that unifies sales, accounting, HR, and inventory into one powerful dashboard',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <div className="min-h-screen flex flex-col">
-          {/* Navbar */}
-          <Navbar />
+        <Providers>
+          <PageBackground>
+            <div className="min-h-screen flex flex-col">
+              {/* Navbar */}
+              <Navbar />
 
-          {/* Main layout with sidebar */}
-          <div className="flex flex-1 pt-16">
-            {/* Sidebar */}
-            <Sidebar />
-
-            {/* Main content area */}
-            <main className="flex-1 lg:pl-64">
-              <Container>
-                {children}
-              </Container>
-            </main>
-          </div>
-        </div>
+              {/* Main layout with sidebar */}
+              <LayoutContent>
+                <ConditionalContainer>{children}</ConditionalContainer>
+              </LayoutContent>
+            </div>
+          </PageBackground>
+        </Providers>
       </body>
     </html>
   );

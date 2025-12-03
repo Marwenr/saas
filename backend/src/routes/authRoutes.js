@@ -8,11 +8,15 @@ import {
   me,
   logout,
 } from '../controllers/authController.js';
+import { registerCompany } from '../controllers/companyController.js';
 import { authenticate } from '../utils/auth.js';
 
-async function authRoutes(fastify, options) {
+async function authRoutes(fastify, _options) {
   // Register
   fastify.post('/register', register);
+
+  // Register company with owner
+  fastify.post('/register-company', registerCompany);
 
   // Login
   fastify.post('/login', login);

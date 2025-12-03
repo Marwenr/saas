@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "cross-env NODE_ENV=test vitest run --no-watch"
   },
   "keywords": [
     "backend",
@@ -16,15 +17,19 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@saas/shared": "workspace:*",
-    "fastify": "^4.24.3",
-    "@fastify/jwt": "^7.2.4",
     "@fastify/cookie": "^9.2.0",
     "@fastify/cors": "^9.0.1",
-    "mongoose": "^8.0.0",
+    "@fastify/jwt": "^7.2.4",
+    "@saas/shared": "workspace:*",
     "bcryptjs": "^2.4.3",
-    "pino": "^8.17.2",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "fastify": "^4.24.3",
+    "mongoose": "^8.0.0",
+    "openai": "^6.9.1",
+    "pino": "^8.17.2"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "vitest": "^2.0.0"
+  }
 }

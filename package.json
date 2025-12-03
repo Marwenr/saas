@@ -7,11 +7,17 @@
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
+    "test": "pnpm --filter backend test",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "prepare": "husky install"
   },
-  "keywords": ["saas", "monorepo", "nextjs", "fastify"],
+  "keywords": [
+    "saas",
+    "monorepo",
+    "nextjs",
+    "fastify"
+  ],
   "author": "",
   "license": "MIT",
   "workspaces": [
@@ -36,8 +42,12 @@
     "pnpm": ">=8.0.0"
   },
   "lint-staged": {
-    "*.{js,jsx}": ["eslint --fix", "prettier --write"],
-    "*.{json,md}": ["prettier --write"]
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   }
 }
-
