@@ -372,7 +372,7 @@ function CustomerDetailsInner() {
                     {vehicle.acquisitionDate && (
                       <div>
                         <div className="text-sm text-[var(--text-secondary)] mb-1">
-                          Date d'acquisition
+                          Date d&apos;acquisition
                         </div>
                         <div className="text-[var(--text-primary)]">
                           {new Date(

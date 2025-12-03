@@ -292,7 +292,7 @@ function CustomerFinanceInner() {
           {/* Monthly Average */}
           <div className="p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
             <div className="text-sm text-[var(--text-secondary)] mb-2">
-              Moyenne d'Achat Mensuelle
+              Moyenne d&apos;Achat Mensuelle
             </div>
             <div className="text-xl font-bold text-[var(--text-primary)]">
               {formatCurrency(finance.monthlyAveragePurchase || 0)}
