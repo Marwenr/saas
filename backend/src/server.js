@@ -32,9 +32,26 @@ const fastify = Fastify({
 
 // Register plugins
 async function registerPlugins() {
-  // CORS
+  // CORS - Support multiple origins
+  const getAllowedOrigins = () => {
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    // If FRONTEND_URL is set and contains commas, split it into an array
+    if (frontendUrl && frontendUrl.includes(',')) {
+      return frontendUrl.split(',').map(url => url.trim());
+    }
+
+    // If FRONTEND_URL is set as a single URL, use it along with localhost
+    if (frontendUrl) {
+      return [frontendUrl, 'http://localhost:3000'];
+    }
+
+    // Default: allow both localhost and production frontend
+    return ['http://localhost:3000', 'https://saas-frontend-pink.vercel.app'];
+  };
+
   await fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: getAllowedOrigins(),
     credentials: true,
   });
 
