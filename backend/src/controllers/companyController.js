@@ -121,18 +121,20 @@ export async function registerCompany(request, reply) {
     );
 
     // Set secure cookies
+    // Use 'none' for cross-origin in production, 'strict' for same-origin in development
+    const isProduction = process.env.NODE_ENV === 'production';
     reply.setCookie('accessToken', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'strict',
       maxAge: 15 * 60, // 15 minutes
       path: '/',
     });
 
     reply.setCookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      secure: isProduction,
+      sameSite: isProduction ? 'none' : 'strict',
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
     });
