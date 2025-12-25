@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { createStockMovement } from '../lib/inventory';
 import Input from './Input';
+import { AlertTriangle, X } from 'lucide-react';
 
 /**
  * StockAdjustmentForm component - Modal form for adjusting stock
@@ -123,19 +124,7 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
             className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
             aria-label="Fermer"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -161,7 +150,8 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
           </div>
           {currentStock <= minStock && (
             <div className="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-400 dark:border-yellow-700 rounded text-yellow-700 dark:text-yellow-400 text-sm">
-              ⚠️ Stock faible
+              <AlertTriangle className="w-4 h-4 inline mr-1" />
+              Stock faible
             </div>
           )}
         </div>

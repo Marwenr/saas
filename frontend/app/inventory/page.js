@@ -9,6 +9,7 @@ import Button from '../../components/Button';
 import { useAuth } from '../../lib/useAuth';
 import { fetchProducts } from '../../lib/products';
 import { fetchLowStockProducts } from '../../lib/inventory';
+import { Package } from 'lucide-react';
 
 /**
  * Inventory page - Stock management
@@ -129,7 +130,7 @@ function InventoryPage() {
 
   return (
     <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container>
+      <Container fullWidth>
         {/* Modern Header */}
         <div className="mb-8">
           <div className="mb-6">
@@ -173,7 +174,7 @@ function InventoryPage() {
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="text-4xl mb-3">📦</div>
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <div className="text-[var(--text-secondary)] text-lg">
               {lowStockOnly
                 ? 'Aucun produit en stock faible'

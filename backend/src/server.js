@@ -18,6 +18,7 @@ import productRoutes from './routes/productRoutes.js';
 import purchaseRoutes from './routes/purchaseRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
 import supplierRoutes from './routes/supplierRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import { connectDB } from './utils/db.js';
 
 // Load environment variables
@@ -88,6 +89,7 @@ async function registerRoutes() {
   await fastify.register(customerRoutes, { prefix: '/api/clients' });
   await fastify.register(reportRoutes, { prefix: '/api/reports' });
   await fastify.register(aiRoutes, { prefix: '/api/ai' });
+  await fastify.register(userRoutes, { prefix: '/api' });
 }
 
 // Global error handler

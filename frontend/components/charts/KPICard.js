@@ -83,7 +83,11 @@ export default function KPICard({
         <div className="flex items-center gap-3">
           {icon && (
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/40 dark:to-purple-800/40 flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <span className="text-2xl">{icon}</span>
+              {typeof icon === 'string' ? (
+                <span className="text-2xl">{icon}</span>
+              ) : (
+                icon
+              )}
             </div>
           )}
           <div className="pt-1">

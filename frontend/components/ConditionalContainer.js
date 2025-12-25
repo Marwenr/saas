@@ -18,5 +18,5 @@ export default function ConditionalContainer({ children }) {
     return <>{children}</>;
   }
 
-  return <Container>{children}</Container>;
+  return <Container fullWidth>{children}</Container>;
 }

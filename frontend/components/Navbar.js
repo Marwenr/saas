@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useAuth } from '../lib/useAuth';
 import { useRouter, usePathname } from 'next/navigation';
 import Button from './Button';
+import { Cloud, Sun, Moon, ArrowRight } from 'lucide-react';
+import { useSidebar } from '../lib/useSidebar';
 
 /**
  * Navbar component - Top navigation bar with theme toggle and auth state
@@ -12,6 +14,7 @@ import Button from './Button';
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
   const { isAuthenticated, companyName, loading, logout } = useAuth();
+  const { toggleSidebar } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -72,21 +75,24 @@ export default function Navbar() {
   // Unified navbar - landing page style throughout the app
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-purple-100/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-[100px]">
         <div className="flex justify-between items-center h-16">
-          {/* Logo/Brand */}
+          {/* Left side - Logo/Brand */}
           <div className="flex items-center space-x-2">
             {/* Cloud icon */}
-            <svg
-              className="w-8 h-8 text-purple-600"
-              fill="currentColor"
-              viewBox="0 0 24 24"
+            <Cloud className="w-8 h-8 text-purple-600" />
+            <button
+              onClick={() => {
+                if (!isAuthenticated) {
+                  router.push('/login');
+                } else {
+                  router.push('/');
+                }
+              }}
+              className="text-2xl font-bold text-purple-900 cursor-pointer"
             >
-              <path d="M19.36 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.64-4.96z" />
-            </svg>
-            <Link href="/" className="text-2xl font-bold text-purple-900">
               CloudERP
-            </Link>
+            </button>
             {/* Show company name when authenticated */}
             {!loading && isAuthenticated && companyName && (
               <span className="text-sm font-medium text-purple-700 hidden sm:inline ml-2">
@@ -100,38 +106,38 @@ export default function Navbar() {
             {!loading && (
               <>
                 {!isAuthenticated ? (
-                  // Not authenticated - show public links
+                  // Not authenticated - show public links that redirect to login
                   <>
-                    <Link
-                      href="/"
+                    <button
+                      onClick={() => router.push('/login')}
                       className={`text-sm font-medium text-purple-900 hover:text-purple-700 transition-colors ${getActiveClass('/')}`}
                     >
                       Home
-                    </Link>
-                    <Link
-                      href="#features"
+                    </button>
+                    <button
+                      onClick={() => router.push('/login')}
                       className="text-sm font-medium text-purple-900 hover:text-purple-700 transition-colors"
                     >
                       Features
-                    </Link>
-                    <Link
-                      href="#demo"
+                    </button>
+                    <button
+                      onClick={() => router.push('/login')}
                       className="text-sm font-medium text-purple-900 hover:text-purple-700 transition-colors"
                     >
                       Demo
-                    </Link>
-                    <Link
-                      href="#pricing"
+                    </button>
+                    <button
+                      onClick={() => router.push('/login')}
                       className="text-sm font-medium text-purple-900 hover:text-purple-700 transition-colors"
                     >
                       Pricing
-                    </Link>
-                    <Link
-                      href="#contacts"
+                    </button>
+                    <button
+                      onClick={() => router.push('/login')}
                       className="text-sm font-medium text-purple-900 hover:text-purple-700 transition-colors"
                     >
                       Contacts
-                    </Link>
+                    </button>
                   </>
                 ) : (
                   // Authenticated - show app links
@@ -182,34 +188,10 @@ export default function Navbar() {
             >
               {darkMode ? (
                 // Sun icon for light mode (clicking will switch to light)
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-                  />
-                </svg>
+                <Sun className="w-5 h-5" />
               ) : (
                 // Moon icon for dark mode (clicking will switch to dark)
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
+                <Moon className="w-5 h-5" />
               )}
             </button>
             {!loading && (
@@ -226,21 +208,7 @@ export default function Navbar() {
                       variant="primary"
                       size="md"
                       onClick={handleGetStarted}
-                      rightIcon={
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
-                      }
+                      rightIcon={<ArrowRight className="w-4 h-4" />}
                     >
                       Get Started
                     </Button>

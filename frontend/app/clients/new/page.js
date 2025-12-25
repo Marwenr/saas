@@ -37,7 +37,7 @@ function NewCustomerPage() {
 
   return (
     <div className="py-8">
-      <Container>
+      <Container fullWidth>
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
             Nouveau client

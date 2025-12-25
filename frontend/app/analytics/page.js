@@ -14,6 +14,7 @@ import {
 import KPICard from '../../components/charts/KPICard';
 import SalesChart from '../../components/charts/SalesChart';
 import TopProductsChart from '../../components/charts/TopProductsChart';
+import { DollarSign, BarChart3, Package, Trophy } from 'lucide-react';
 
 function AnalyticsPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -137,7 +138,7 @@ function AnalyticsPage() {
 
   return (
     <div className="py-8">
-      <Container>
+      <Container fullWidth>
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-[var(--text-primary)]">
             Analytics
@@ -245,7 +246,7 @@ function AnalyticsPage() {
                 null
               }
               formatter={formatCurrency}
-              icon="💰"
+              icon={<DollarSign className="w-6 h-6" />}
             />
             <KPICard
               title="Number of Sales"
@@ -264,7 +265,7 @@ function AnalyticsPage() {
                 null
               }
               formatter={formatNumber}
-              icon="📊"
+              icon={<BarChart3 className="w-6 h-6" />}
             />
             <KPICard
               title="Total Quantity Sold"
@@ -283,7 +284,7 @@ function AnalyticsPage() {
                 null
               }
               formatter={formatNumber}
-              icon="📦"
+              icon={<Package className="w-6 h-6" />}
             />
           </div>
         )}
@@ -306,7 +307,8 @@ function AnalyticsPage() {
         {currentTopProducts?.products && (
           <div className="mb-6 p-6 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border-color)]">
             <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
-              🏆 Top Products (Current Period)
+              <Trophy className="w-5 h-5 inline mr-2" />
+              Top Products (Current Period)
             </h2>
             <TopProductsChart
               products={currentTopProducts.products}

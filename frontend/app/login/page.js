@@ -7,6 +7,7 @@ import Button from '../../components/Button';
 import Card from '../../components/Card';
 import PageContainer from '../../components/PageContainer';
 import Input from '../../components/Input';
+import { ArrowRight } from 'lucide-react';
 
 /**
  * Login page (multi-tenant aware)
@@ -132,21 +133,7 @@ export default function LoginPage() {
               size="md"
               fullWidth
               onClick={() => router.push('/register')}
-              rightIcon={
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              }
+              rightIcon={<ArrowRight className="w-4 h-4" />}
             >
               Create Your Shop
             </Button>

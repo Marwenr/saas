@@ -6,6 +6,7 @@ import Container from '../../components/Container';
 import AuthGuard from '../../components/AuthGuard';
 import { useAuth } from '../../lib/useAuth';
 import { searchReference, getChatHistory } from '../../lib/ai';
+import { Search } from 'lucide-react';
 
 /**
  * AI Reference Search page - Chat interface for finding equivalent references
@@ -140,7 +141,7 @@ function AIReferenceSearchPage() {
 
   return (
     <div className="py-8">
-      <Container>
+      <Container fullWidth>
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
@@ -165,7 +166,7 @@ function AIReferenceSearchPage() {
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {results.length === 0 ? (
                   <div className="text-center py-12 text-[var(--text-secondary)]">
-                    <div className="text-4xl mb-4">🔍</div>
+                    <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-lg">
                       Entrez une référence pour commencer la recherche
                     </p>

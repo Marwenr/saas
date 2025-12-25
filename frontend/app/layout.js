@@ -4,6 +4,7 @@ import LayoutContent from '../components/LayoutContent';
 import { Providers } from '../components/Providers';
 import ConditionalContainer from '../components/ConditionalContainer';
 import PageBackground from '../components/PageBackground';
+import GlobalAuthGuard from '../components/GlobalAuthGuard';
 
 /**
  * Root layout for Next.js App Router
@@ -20,17 +21,19 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>
-          <PageBackground>
-            <div className="min-h-screen flex flex-col">
-              {/* Navbar */}
-              <Navbar />
+          <GlobalAuthGuard>
+            <PageBackground>
+              <div className="min-h-screen flex flex-col">
+                {/* Navbar */}
+                <Navbar />
 
-              {/* Main layout with sidebar */}
-              <LayoutContent>
-                <ConditionalContainer>{children}</ConditionalContainer>
-              </LayoutContent>
-            </div>
-          </PageBackground>
+                {/* Main layout with sidebar */}
+                <LayoutContent>
+                  <ConditionalContainer>{children}</ConditionalContainer>
+                </LayoutContent>
+              </div>
+            </PageBackground>
+          </GlobalAuthGuard>
         </Providers>
       </body>
     </html>

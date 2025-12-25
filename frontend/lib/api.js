@@ -175,3 +175,62 @@ export async function registerCompany({ company, user }) {
 
   return data; // expected: { user, company, message }
 }
+
+/**
+ * User management API functions
+ * Only owners can access these endpoints
+ */
+
+/**
+ * Get all users for the company
+ * @returns {Promise<Object>} Response with users array: { users: [...] }
+ */
+export async function getUsers() {
+  return fetchAPI('/api/users', {
+    method: 'GET',
+  });
+}
+
+/**
+ * Create a new user
+ * @param {Object} userData - User data
+ * @param {string} userData.email - User email (required)
+ * @param {string} userData.password - User password (required)
+ * @param {string} [userData.name] - User name (optional)
+ * @param {string} [userData.role] - User role: 'manager', 'cashier', or 'storekeeper' (optional, defaults to 'cashier')
+ * @returns {Promise<Object>} Response with created user: { user: {...} }
+ */
+export async function createUser(userData) {
+  return fetchAPI('/api/users', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  });
+}
+
+/**
+ * Update a user
+ * @param {string} userId - User ID
+ * @param {Object} userData - User data to update
+ * @param {string} [userData.email] - User email (optional)
+ * @param {string} [userData.password] - User password (optional)
+ * @param {string} [userData.name] - User name (optional)
+ * @param {string} [userData.role] - User role: 'manager', 'cashier', or 'storekeeper' (optional)
+ * @returns {Promise<Object>} Response with updated user: { user: {...} }
+ */
+export async function updateUser(userId, userData) {
+  return fetchAPI(`/api/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  });
+}
+
+/**
+ * Delete a user
+ * @param {string} userId - User ID
+ * @returns {Promise<Object>} Response: { message: 'User deleted successfully' }
+ */
+export async function deleteUser(userId) {
+  return fetchAPI(`/api/users/${userId}`, {
+    method: 'DELETE',
+  });
+}

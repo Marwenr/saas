@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '../lib/useAuth';
+import { useSidebar } from '../lib/useSidebar';
 import Sidebar from './Sidebar';
 import { usePathname } from 'next/navigation';
 
@@ -10,6 +11,7 @@ import { usePathname } from 'next/navigation';
  */
 export default function LayoutContent({ children }) {
   const { isAuthenticated } = useAuth();
+  const { isOpen } = useSidebar();
   const pathname = usePathname();
   const isLandingPage = pathname === '/';
 
@@ -23,8 +25,10 @@ export default function LayoutContent({ children }) {
       {/* Sidebar */}
       {isAuthenticated && <Sidebar />}
 
-      {/* Main content area - adjust padding based on sidebar visibility */}
-      <main className={`flex-1 ${isAuthenticated ? 'lg:pl-64' : ''}`}>
+      {/* Main content area - adjust padding based on sidebar state (always visible but collapsed/expanded) */}
+      <main
+        className={`flex-1 transition-all duration-300 ${isAuthenticated ? (isOpen ? 'pl-64' : 'pl-16') : ''}`}
+      >
         {children}
       </main>
     </div>

@@ -11,6 +11,17 @@ import {
   fetchTopProductsReport,
 } from '../../lib/reports';
 import KPICard from '../../components/charts/KPICard';
+import {
+  LayoutGrid,
+  Filter,
+  Share2,
+  DollarSign,
+  BarChart3,
+  Package,
+  AlertTriangle,
+  CheckCircle,
+  Trophy,
+} from 'lucide-react';
 
 function DashboardPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -110,7 +121,7 @@ function DashboardPage() {
 
   return (
     <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container>
+      <Container fullWidth>
         {/* Modern Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -126,63 +137,21 @@ function DashboardPage() {
               <Button
                 variant="tertiary"
                 size="md"
-                icon={
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                    />
-                  </svg>
-                }
+                icon={<LayoutGrid className="w-5 h-5" />}
               >
                 Customize widget
               </Button>
               <Button
                 variant="tertiary"
                 size="md"
-                icon={
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                }
+                icon={<Filter className="w-5 h-5" />}
               >
                 Filter
               </Button>
               <Button
                 variant="tertiary"
                 size="md"
-                icon={
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                    />
-                  </svg>
-                }
+                icon={<Share2 className="w-5 h-5" />}
               >
                 Share
               </Button>
@@ -289,7 +258,7 @@ function DashboardPage() {
                   null
                 }
                 formatter={formatCurrency}
-                icon="💰"
+                icon={<DollarSign className="w-6 h-6" />}
                 period={getPeriodLabel()}
               />
               <KPICard
@@ -307,7 +276,7 @@ function DashboardPage() {
                   null
                 }
                 formatter={formatNumber}
-                icon="📊"
+                icon={<BarChart3 className="w-6 h-6" />}
                 period={getPeriodLabel()}
               />
               <KPICard
@@ -325,7 +294,7 @@ function DashboardPage() {
                   null
                 }
                 formatter={formatNumber}
-                icon="📦"
+                icon={<Package className="w-6 h-6" />}
                 period={getPeriodLabel()}
               />
             </div>
@@ -339,7 +308,7 @@ function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3 mb-2">
-                    <span className="text-3xl">⚠️</span>
+                    <AlertTriangle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                     <span>Stock Alerts</span>
                   </h2>
                   <p className="text-sm text-[var(--text-secondary)]">
@@ -419,7 +388,7 @@ function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-[var(--text-secondary)]">
-                  <div className="text-4xl mb-2">✅</div>
+                  <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-2" />
                   <div>No stock alerts. All products are well stocked!</div>
                 </div>
               )}
@@ -432,7 +401,7 @@ function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3 mb-2">
-                    <span className="text-3xl">🏆</span>
+                    <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
                     <span>Top Products</span>
                   </h2>
                   <p className="text-sm text-[var(--text-secondary)]">
@@ -508,7 +477,7 @@ function DashboardPage() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-[var(--text-secondary)]">
-                  <div className="text-4xl mb-2">📊</div>
+                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
                   <div>No sales data found for the selected period</div>
                 </div>
               )}

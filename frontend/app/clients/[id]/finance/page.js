@@ -162,7 +162,7 @@ function CustomerFinanceInner() {
   if (error) {
     return (
       <div className="py-8">
-        <Container>
+        <Container fullWidth>
           <div className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400">
             {error}
           </div>
@@ -180,7 +180,7 @@ function CustomerFinanceInner() {
   if (!customer || !finance) {
     return (
       <div className="py-8">
-        <Container>
+        <Container fullWidth>
           <div className="text-center py-12">
             <div className="text-[var(--text-secondary)]">
               Données non trouvées

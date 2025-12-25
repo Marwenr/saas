@@ -8,6 +8,7 @@ import ProductForm from '../../components/ProductForm';
 import { useAuth } from '../../lib/useAuth';
 import { fetchProducts, deleteProduct } from '../../lib/products';
 import Button from '../../components/Button';
+import { Package } from 'lucide-react';
 
 /**
  * Products page - Catalogue Pièces
@@ -139,7 +140,7 @@ function ProductsPage() {
 
   return (
     <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container>
+      <Container fullWidth>
         {/* Modern Header */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -198,7 +199,7 @@ function ProductsPage() {
           </div>
         ) : products.length === 0 ? (
           <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="text-4xl mb-3">📦</div>
+            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <div className="text-[var(--text-secondary)] text-lg">
               {search
                 ? 'Aucun produit trouvé'

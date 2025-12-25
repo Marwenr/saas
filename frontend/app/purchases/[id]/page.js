@@ -186,7 +186,7 @@ function PurchaseOrderDetailPage() {
   if (!purchaseOrder) {
     return (
       <div className="py-8">
-        <Container>
+        <Container fullWidth>
           <div className="text-center py-12">
             <div className="text-[var(--text-secondary)]">
               Bon de commande non trouvé
