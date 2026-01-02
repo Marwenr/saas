@@ -348,7 +348,8 @@ function DashboardPage() {
                             </div>
                             <div className="text-sm text-[var(--text-secondary)] mt-1">
                               SKU: {item.sku}
-                              {item.brand && ` • ${item.brand}`}
+                              {item.brand &&
+                                ` • ${item.brand?.name || item.brand}`}
                             </div>
                           </div>
                           <div className="text-right ml-4">
@@ -449,7 +450,8 @@ function DashboardPage() {
                               </div>
                               <div className="text-sm text-[var(--text-secondary)] mt-1">
                                 SKU: {product.sku}
-                                {product.brand && ` • ${product.brand}`}
+                                {product.brand &&
+                                  ` • ${product.brand?.name || product.brand}`}
                               </div>
                             </div>
                           </div>

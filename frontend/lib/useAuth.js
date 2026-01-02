@@ -44,19 +44,18 @@ export function AuthProvider({ children }) {
   };
 
   const loginUser = async (email, password) => {
-    setLoading(true);
+    // Don't set global loading to true here - let the login page handle its own loading state
+    // This prevents GlobalAuthGuard from interfering during login
     try {
       const data = await login(email, password); // /auth/login
       // Login response includes user data, but we need to refresh to get full company data
       // The backend sets httpOnly cookies, so we call checkAuth to get complete state
       await checkAuth();
     } catch (error) {
-      setUser(null);
-      setCompany(null);
-      setIsAuthenticated(false);
-      throw error; // Re-throw so caller can handle it
-    } finally {
-      setLoading(false);
+      // Don't clear auth state on error - let the user stay on login page
+      // Only clear if we're sure it's an auth error (not a network error)
+      // Re-throw error so caller can handle it and display error message
+      throw error;
     }
   };
 

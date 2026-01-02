@@ -47,7 +47,7 @@ export async function register(request, reply) {
         userId: user._id,
         companyId: user.companyId ? user.companyId.toString() : null,
       },
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     // Set secure cookies
@@ -65,7 +65,7 @@ export async function register(request, reply) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
     });
 
@@ -105,7 +105,7 @@ export async function login(request, reply) {
       .populate('companyId');
     if (!user) {
       return reply.code(401).send({
-        error: 'Invalid email or password',
+        error: 'email invalide',
       });
     }
 
@@ -113,7 +113,7 @@ export async function login(request, reply) {
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return reply.code(401).send({
-        error: 'Invalid email or password',
+        error: 'password invalide',
       });
     }
 
@@ -132,7 +132,7 @@ export async function login(request, reply) {
         userId: user._id,
         companyId: user.companyId ? user.companyId.toString() : null,
       },
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
 
     // Set secure cookies
@@ -150,7 +150,7 @@ export async function login(request, reply) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
     });
 

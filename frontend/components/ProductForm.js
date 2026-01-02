@@ -1,20 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createProduct, updateProduct } from '../lib/products';
+import { fetchBrands, createBrand } from '../lib/brands';
 import Input from './Input';
 
 /**
  * ProductForm component - Modal form for creating/editing products
+ * @param {Object} product - Product to edit (optional, if not provided, creates new product)
+ * @param {Function} onClose - Callback when modal is closed
+ * @param {Function} onCreated - Optional callback when product is created, receives the created product
  */
-export default function ProductForm({ product, onClose }) {
+export default function ProductForm({ product, onClose, onCreated }) {
   const isEditing = !!product;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [brandSuggestions, setBrandSuggestions] = useState([]);
+  const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
+  const [brandSearchTerm, setBrandSearchTerm] = useState('');
+  const brandInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
     brand: '',
+    brandId: null,
     manufacturerRef: '',
     category: '',
     salePrice: '',
@@ -23,7 +33,6 @@ export default function ProductForm({ product, onClose }) {
     purchasePrice: '',
     taxRate: '19.00',
     marginRate: '20.00',
-    minMarginOnLastPurchase: '10.00',
     isActive: true,
   });
 
@@ -39,7 +48,8 @@ export default function ProductForm({ product, onClose }) {
       setFormData({
         sku: product.sku || '',
         name: product.name || '',
-        brand: product.brand || '',
+        brand: product.brand?.name || product.brand || '',
+        brandId: product.brand?._id || product.brand || null,
         manufacturerRef: product.manufacturerRef || '',
         category: product.category || '',
         salePrice:
@@ -60,58 +70,68 @@ export default function ProductForm({ product, onClose }) {
           product.marginRate !== undefined && product.marginRate !== null
             ? parseFloat(product.marginRate).toFixed(2)
             : '20.00',
-        minMarginOnLastPurchase:
-          product.minMarginOnLastPurchase !== undefined &&
-          product.minMarginOnLastPurchase !== null
-            ? parseFloat(product.minMarginOnLastPurchase).toFixed(2)
-            : '10.00',
         isActive: product.isActive !== undefined ? product.isActive : true,
       });
     }
   }, [product]);
 
-  // Auto-calculate salePrice using HYBRID pricing mode
-  // All 3 parameters are independent and included in the calculation:
-  // 1. marginRate (Taux de gain) - applied to purchasePrice
-  // 2. minMarginOnLastPurchase (Marge min. sur dernier achat) - protection
-  // 3. taxRate (Taux de TVA) - applied to final price
-  //
+  // Fetch brand suggestions when search term changes
+  useEffect(() => {
+    const searchBrands = async () => {
+      if (brandSearchTerm.trim().length > 0) {
+        try {
+          const response = await fetchBrands({ search: brandSearchTerm });
+          setBrandSuggestions(response.brands || []);
+          setShowBrandSuggestions(true);
+        } catch (err) {
+          console.error('Failed to fetch brands:', err);
+          setBrandSuggestions([]);
+        }
+      } else {
+        setBrandSuggestions([]);
+        setShowBrandSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchBrands, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [brandSearchTerm]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        brandInputRef.current &&
+        !brandInputRef.current.contains(event.target)
+      ) {
+        setShowBrandSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Auto-calculate salePrice
   // Calculation:
-  // priceTarget = purchasePrice * (1 + marginRate / 100) - price HT with gain
-  // priceMinSafe = lastPurchasePrice * (1 + minMarginOnLast / 100) - price HT with protection
-  // priceHT = max(priceTarget, priceMinSafe) - best HT price
+  // priceHT = purchasePrice * (1 + marginRate / 100) - price HT with gain
   // priceTTC = priceHT * (1 + taxRate / 100) - final price with tax
   useEffect(() => {
     const purchasePrice = parseFloat(formData.purchasePrice) || 0;
-    const lastPurchasePrice = purchasePrice; // When creating/editing, lastPurchasePrice = purchasePrice
     const marginRate = parseFloat(formData.marginRate) || 0;
-    const minMarginOnLast = parseFloat(formData.minMarginOnLastPurchase) || 10;
-    const taxRate = parseFloat(formData.taxRate) || 0;
+    const taxRate = parseFloat(formData.taxRate) || 19; // Default to 19% if not set
 
     // Only auto-calculate if purchasePrice is provided and valid
     if (purchasePrice > 0 && !isNaN(purchasePrice)) {
-      let priceHT = 0;
-
-      // Step 1: Calculate price HT with gain (marginRate) - independent
-      const priceTarget =
+      // Calculate price HT with gain (marginRate)
+      const priceHT =
         purchasePrice > 0 && marginRate > 0
           ? purchasePrice * (1 + marginRate / 100)
-          : 0;
+          : purchasePrice;
 
-      // Step 2: Calculate minimum safe price HT (minMarginOnLastPurchase) - independent
-      const priceMinSafe =
-        lastPurchasePrice > 0
-          ? lastPurchasePrice * (1 + minMarginOnLast / 100)
-          : 0;
-
-      // Step 3: Get the best HT price (maximum of both to avoid losses)
-      if (marginRate > 0 && priceTarget > 0) {
-        priceHT = Math.max(priceTarget, priceMinSafe);
-      } else {
-        priceHT = priceMinSafe;
-      }
-
-      // Step 4: Add tax (taxRate) - independent
+      // Add tax (taxRate)
       const priceTTC = priceHT > 0 ? priceHT * (1 + taxRate / 100) : 0;
 
       if (priceTTC > 0) {
@@ -124,15 +144,21 @@ export default function ProductForm({ product, onClose }) {
       // If purchasePrice is cleared, keep salePrice as is (user can still edit manually)
       // Don't reset it to empty
     }
-  }, [
-    formData.purchasePrice,
-    formData.marginRate,
-    formData.minMarginOnLastPurchase,
-    formData.taxRate,
-  ]);
+  }, [formData.purchasePrice, formData.marginRate, formData.taxRate]);
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target;
+
+    // Special handling for brand input
+    if (name === 'brand') {
+      setBrandSearchTerm(value);
+      setFormData(prev => ({
+        ...prev,
+        brand: value,
+        brandId: null, // Reset brandId when user types
+      }));
+      return;
+    }
 
     // If user manually changes salePrice, don't auto-calculate
     // Otherwise, let the useEffect handle the calculation
@@ -142,6 +168,29 @@ export default function ProductForm({ product, onClose }) {
     }));
   };
 
+  const handleBrandSelect = brand => {
+    setFormData(prev => ({
+      ...prev,
+      brand: brand.name,
+      brandId: brand._id,
+    }));
+    setBrandSearchTerm(brand.name);
+    setShowBrandSuggestions(false);
+  };
+
+  const handleBrandCreate = async () => {
+    if (!brandSearchTerm.trim()) return;
+
+    try {
+      const response = await createBrand({ name: brandSearchTerm.trim() });
+      const newBrand = response.brand;
+      handleBrandSelect(newBrand);
+    } catch (err) {
+      console.error('Failed to create brand:', err);
+      setError(err.message || 'Échec de la création de la marque');
+    }
+  };
+
   const handleSubmit = async e => {
     e.preventDefault();
     setError(null);
@@ -149,10 +198,14 @@ export default function ProductForm({ product, onClose }) {
 
     try {
       // Prepare payload
+      // Use brandId if available, otherwise use brand name (for backward compatibility or new creation)
+      const brandPayload =
+        formData.brandId || formData.brand.trim() || undefined;
+
       const payload = {
         sku: formData.sku.trim(),
         name: formData.name.trim(),
-        brand: formData.brand.trim() || undefined,
+        brand: brandPayload,
         manufacturerRef: formData.manufacturerRef.trim() || undefined,
         category: formData.category.trim() || undefined,
         salePrice: parseFloat(formData.salePrice),
@@ -163,9 +216,6 @@ export default function ProductForm({ product, onClose }) {
           : undefined,
         taxRate: formData.taxRate ? parseFloat(formData.taxRate) : 19,
         marginRate: formData.marginRate ? parseFloat(formData.marginRate) : 20,
-        minMarginOnLastPurchase: formData.minMarginOnLastPurchase
-          ? parseFloat(formData.minMarginOnLastPurchase)
-          : 10,
         isActive: formData.isActive,
       };
 
@@ -182,7 +232,13 @@ export default function ProductForm({ product, onClose }) {
       if (isEditing) {
         await updateProduct(product._id || product.id, payload);
       } else {
-        await createProduct(payload);
+        const response = await createProduct(payload);
+        // Extract product from response (could be { product } or just the product object)
+        const createdProduct = response.product || response;
+        // Call onCreated callback if provided
+        if (onCreated) {
+          onCreated(createdProduct);
+        }
       }
 
       onClose();
@@ -264,16 +320,53 @@ export default function ProductForm({ product, onClose }) {
 
             {/* Brand and Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                id="brand"
-                name="brand"
-                label="Marque"
-                value={formData.brand}
-                onChange={handleChange}
-                placeholder="Marque"
-                disabled={loading}
-              />
+              <div className="relative" ref={brandInputRef}>
+                <Input
+                  type="text"
+                  id="brand"
+                  name="brand"
+                  label="Marque"
+                  value={formData.brand}
+                  onChange={handleChange}
+                  placeholder="Rechercher ou ajouter une marque"
+                  disabled={loading}
+                  autoComplete="off"
+                />
+                {showBrandSuggestions && brandSuggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                  >
+                    {brandSuggestions.map(brand => (
+                      <button
+                        key={brand._id}
+                        type="button"
+                        onClick={() => handleBrandSelect(brand)}
+                        className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors"
+                      >
+                        {brand.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showBrandSuggestions &&
+                  brandSearchTerm.trim() &&
+                  brandSuggestions.length === 0 && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg"
+                    >
+                      <button
+                        type="button"
+                        onClick={handleBrandCreate}
+                        className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                      >
+                        <span>+</span>
+                        <span>Ajouter "{brandSearchTerm.trim()}"</span>
+                      </button>
+                    </div>
+                  )}
+              </div>
               <Input
                 type="text"
                 id="category"
@@ -360,33 +453,6 @@ export default function ProductForm({ product, onClose }) {
                   step="0.01"
                   disabled={loading}
                 />
-                <div>
-                  <Input
-                    type="number"
-                    id="minMarginOnLastPurchase"
-                    name="minMarginOnLastPurchase"
-                    label="Marge min. sur dernier achat (%)"
-                    labelSuffix={
-                      <span className="text-gray-500 text-xs">
-                        (minMarginOnLastPurchase)
-                      </span>
-                    }
-                    value={formData.minMarginOnLastPurchase}
-                    onChange={handleChange}
-                    placeholder="10"
-                    min="0"
-                    step="0.01"
-                    disabled
-                    className="opacity-60 cursor-not-allowed"
-                  />
-                  {formData.minMarginOnLastPurchase &&
-                    parseFloat(formData.minMarginOnLastPurchase) > 0 && (
-                      <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                        Marge min. sur dernier achat:{' '}
-                        {formData.minMarginOnLastPurchase}%
-                      </p>
-                    )}
-                </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input

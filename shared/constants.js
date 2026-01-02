@@ -32,8 +32,8 @@ export const API_ROUTES = {
 
 // JWT expiration times (in seconds)
 export const JWT_EXPIRATION = {
-  ACCESS_TOKEN: 15 * 60, // 15 minutes
-  REFRESH_TOKEN: 7 * 24 * 60 * 60, // 7 days
+  ACCESS_TOKEN: 30 * 24 * 60 * 60, // 15 minutes
+  REFRESH_TOKEN: 30 * 24 * 60 * 60, // 30 days
 };
 
 // HTTP status codes

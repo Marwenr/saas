@@ -540,6 +540,7 @@ function POSPage() {
       totalExclTax,
       totalTax: calculatedTax || totalTax,
       subtotalInclTax,
+      subtotalExclTaxAfterDiscount,
       globalDiscount: globalDiscount || 0,
       globalDiscountAmount: globalDiscountAmount || 0,
       subtotalAfterGlobalDiscount,
@@ -1301,6 +1302,18 @@ function POSPage() {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Sous-Total avant tax */}
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-[var(--text-secondary)] mb-1">
+                    Sous-Total avant tax
+                  </span>
+                  <span className="text-lg font-semibold text-[var(--text-primary)]">
+                    {totals.subtotalExclTaxAfterDiscount?.toFixed(2) ||
+                      totals.totalExclTax.toFixed(2)}{' '}
+                    TND
+                  </span>
+                </div>
+
                 {/* Sous-Total */}
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-[var(--text-secondary)] mb-1">
@@ -1310,39 +1323,6 @@ function POSPage() {
                     {totals.subtotalAfterGlobalDiscount?.toFixed(2) ||
                       totals.subtotalInclTax.toFixed(2)}{' '}
                     TND
-                  </span>
-                </div>
-
-                {/* Remise Globale */}
-                <div className="flex flex-col">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium text-[var(--text-secondary)]">
-                      Remise Globale
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.1"
-                        value={globalDiscount}
-                        onChange={e =>
-                          setGlobalDiscount(
-                            Math.max(
-                              0,
-                              Math.min(100, parseFloat(e.target.value) || 0)
-                            )
-                          )
-                        }
-                        className="w-14 px-2 py-1 text-center border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs"
-                      />
-                      <span className="text-xs text-[var(--text-secondary)]">
-                        %
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-lg font-semibold text-red-600 dark:text-red-400">
-                    - {totals.globalDiscountAmount?.toFixed(2) || '0.00'} TND
                   </span>
                 </div>
 

@@ -18,16 +18,17 @@ export default function GlobalAuthGuard({ children }) {
 
   useEffect(() => {
     // Only redirect if auth check is complete and user is not authenticated
-    if (!loading && !isAuthenticated) {
-      // Check if current path is not a public route
-      if (!publicRoutes.includes(pathname)) {
-        router.push('/login');
-      }
+    // Don't redirect if we're already on a public route (login/register)
+    // This prevents redirect loops and unwanted refreshes on login page
+    if (!loading && !isAuthenticated && !publicRoutes.includes(pathname)) {
+      // Use replace instead of push to avoid adding to history
+      router.replace('/login');
     }
   }, [loading, isAuthenticated, pathname, router]);
 
   // Show loading state while checking auth
-  if (loading) {
+  // But don't block public routes during loading
+  if (loading && !publicRoutes.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-purple-700 dark:text-purple-300">Loading...</div>
@@ -36,6 +37,7 @@ export default function GlobalAuthGuard({ children }) {
   }
 
   // If not authenticated and on a protected route, don't render children (redirect will happen)
+  // But allow public routes to render even if not authenticated
   if (!isAuthenticated && !publicRoutes.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -47,5 +49,6 @@ export default function GlobalAuthGuard({ children }) {
   }
 
   // Show children for authenticated users or public routes
+  // Always show public routes, even if not authenticated
   return <>{children}</>;
 }

@@ -116,7 +116,7 @@ function ProductAnalyticsInner() {
               Marque
             </div>
             <div className="text-[var(--text-primary)]">
-              {product?.brand || '-'}
+              {product?.brand?.name || product?.brand || '-'}
             </div>
           </div>
           <div className="p-4 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">

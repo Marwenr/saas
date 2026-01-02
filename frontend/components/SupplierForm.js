@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { createSupplier, updateSupplier } from '../lib/suppliers';
 import Input from './Input';
 
@@ -11,23 +12,31 @@ export default function SupplierForm({ supplier, onClose }) {
   const isEditing = !!supplier;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    contactName: '',
-    email: '',
-    phone: '',
-    taxNumber: '',
-    address: '',
-    city: '',
-    country: 'TN',
-    isActive: true,
-    notes: '',
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      name: '',
+      contactName: '',
+      email: '',
+      phone: '',
+      taxNumber: '',
+      address: '',
+      city: '',
+      country: 'TN',
+      isActive: true,
+      notes: '',
+    },
   });
 
   // Load supplier data if editing
   useEffect(() => {
     if (supplier) {
-      setFormData({
+      reset({
         name: supplier.name || '',
         contactName: supplier.contactName || '',
         email: supplier.email || '',
@@ -40,34 +49,25 @@ export default function SupplierForm({ supplier, onClose }) {
         notes: supplier.notes || '',
       });
     }
-  }, [supplier]);
+  }, [supplier, reset]);
 
-  const handleChange = e => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleSubmit = async e => {
-    e.preventDefault();
+  const onSubmit = async data => {
     setError(null);
     setLoading(true);
 
     try {
       // Prepare payload
       const payload = {
-        name: formData.name.trim(),
-        contactName: formData.contactName.trim() || undefined,
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
-        taxNumber: formData.taxNumber.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        city: formData.city.trim() || undefined,
-        country: formData.country.trim() || undefined,
-        isActive: formData.isActive,
-        notes: formData.notes.trim() || undefined,
+        name: data.name.trim(),
+        contactName: data.contactName.trim() || undefined,
+        email: data.email.trim() || undefined,
+        phone: data.phone.trim() || undefined,
+        taxNumber: data.taxNumber.trim() || undefined,
+        address: data.address.trim() || undefined,
+        city: data.city.trim() || undefined,
+        country: data.country.trim() || undefined,
+        isActive: data.isActive,
+        notes: data.notes.trim() || undefined,
       };
 
       // Validate required fields
@@ -120,7 +120,7 @@ export default function SupplierForm({ supplier, onClose }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
           {/* Error message */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -131,40 +131,47 @@ export default function SupplierForm({ supplier, onClose }) {
           {/* Form fields */}
           <div className="space-y-4">
             {/* Name - Required */}
-            <Input
-              type="text"
-              id="name"
-              name="name"
-              label="Nom"
-              labelSuffix={<span className="text-red-500">*</span>}
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Nom du fournisseur"
-              required
-              disabled={loading}
-            />
+            <div>
+              <Input
+                type="text"
+                id="name"
+                label="Nom"
+                labelSuffix={<span className="text-red-500">*</span>}
+                placeholder="Nom du fournisseur"
+                disabled={loading}
+                {...register('name', {
+                  required: 'Le nom est obligatoire',
+                })}
+              />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
             {/* Contact Name and Email */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input
                 type="text"
                 id="contactName"
-                name="contactName"
                 label="Nom du contact"
-                value={formData.contactName}
-                onChange={handleChange}
                 placeholder="Nom du contact"
                 disabled={loading}
+                {...register('contactName')}
               />
               <Input
                 type="email"
                 id="email"
-                name="email"
                 label="Email"
-                value={formData.email}
-                onChange={handleChange}
                 placeholder="email@example.com"
                 disabled={loading}
+                {...register('email', {
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address',
+                  },
+                })}
               />
             </div>
 
@@ -173,22 +180,18 @@ export default function SupplierForm({ supplier, onClose }) {
               <Input
                 type="tel"
                 id="phone"
-                name="phone"
                 label="Téléphone"
-                value={formData.phone}
-                onChange={handleChange}
                 placeholder="+216 XX XXX XXX"
                 disabled={loading}
+                {...register('phone')}
               />
               <Input
                 type="text"
                 id="taxNumber"
-                name="taxNumber"
                 label="Numéro fiscal"
-                value={formData.taxNumber}
-                onChange={handleChange}
                 placeholder="Numéro fiscal"
                 disabled={loading}
+                {...register('taxNumber')}
               />
             </div>
 
@@ -196,12 +199,10 @@ export default function SupplierForm({ supplier, onClose }) {
             <Input
               type="text"
               id="address"
-              name="address"
               label="Adresse"
-              value={formData.address}
-              onChange={handleChange}
               placeholder="Adresse"
               disabled={loading}
+              {...register('address')}
             />
 
             {/* City and Country */}
@@ -209,22 +210,18 @@ export default function SupplierForm({ supplier, onClose }) {
               <Input
                 type="text"
                 id="city"
-                name="city"
                 label="Ville"
-                value={formData.city}
-                onChange={handleChange}
                 placeholder="Ville"
                 disabled={loading}
+                {...register('city')}
               />
               <Input
                 type="text"
                 id="country"
-                name="country"
                 label="Pays"
-                value={formData.country}
-                onChange={handleChange}
                 placeholder="TN"
                 disabled={loading}
+                {...register('country')}
               />
             </div>
 
@@ -234,9 +231,7 @@ export default function SupplierForm({ supplier, onClose }) {
                 Notes
               </label>
               <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
+                {...register('notes')}
                 rows={3}
                 className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Notes supplémentaires"
@@ -247,9 +242,7 @@ export default function SupplierForm({ supplier, onClose }) {
             <div className="flex items-center">
               <input
                 type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
+                {...register('isActive')}
                 id="isActive"
                 className="w-4 h-4 text-primary-600 border-[var(--border-color)] rounded focus:ring-primary-500"
               />

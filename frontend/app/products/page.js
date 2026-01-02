@@ -246,7 +246,7 @@ function ProductsPage() {
                           {product.name || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
-                          {product.brand || '-'}
+                          {product.brand?.name || product.brand || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
                           {product.category || '-'}

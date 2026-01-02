@@ -11,6 +11,7 @@ import {
   deleteProduct,
   getProductSuppliers,
 } from '../controllers/productController.js';
+import Brand from '../models/brand.model.js';
 import Product from '../models/product.model.js';
 import PurchaseOrder from '../models/purchaseOrder.model.js';
 import Sale from '../models/sale.model.js';
@@ -53,6 +54,26 @@ async function productRoutes(fastify, _options) {
         companyId: new mongoose.Types.ObjectId(companyIdStr),
         isDeleted: { $ne: true },
       }).lean();
+
+      // Safely populate brand if it exists and is a valid ObjectId
+      if (product && product.brand) {
+        if (
+          mongoose.Types.ObjectId.isValid(product.brand) &&
+          String(product.brand).length === 24
+        ) {
+          try {
+            const brand = await Brand.findById(product.brand)
+              .select('name')
+              .lean();
+            product.brand = brand || null;
+          } catch (error) {
+            product.brand = null;
+          }
+        } else {
+          // Legacy string value
+          product.brand = null;
+        }
+      }
 
       if (!product) {
         return reply.code(404).send({ message: 'Product not found' });

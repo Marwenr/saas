@@ -15,23 +15,29 @@
  * @param {string} props.label - Label text
  * @param {React.ReactNode} props.labelSuffix - Additional content after label (e.g., required asterisk)
  */
-export default function Input({
-  type = 'text',
-  id,
-  name,
-  value,
-  onChange,
-  placeholder = '',
-  required = false,
-  disabled = false,
-  className = '',
-  minLength,
-  maxLength,
-  label,
-  labelSuffix,
-  ...props
-}) {
-  const inputClasses = `
+import { forwardRef } from 'react';
+
+const Input = forwardRef(
+  (
+    {
+      type = 'text',
+      id,
+      name,
+      value,
+      onChange,
+      placeholder = '',
+      required = false,
+      disabled = false,
+      className = '',
+      minLength,
+      maxLength,
+      label,
+      labelSuffix,
+      ...props
+    },
+    ref
+  ) => {
+    const inputClasses = `
     w-full px-4 py-3 
     border border-purple-200 dark:border-purple-800 
     rounded-lg 
@@ -43,39 +49,66 @@ export default function Input({
     disabled:opacity-50 disabled:cursor-not-allowed
     ${className}
   `
-    .trim()
-    .replace(/\s+/g, ' ');
+      .trim()
+      .replace(/\s+/g, ' ');
 
-  const inputElement = (
-    <input
-      type={type}
-      id={id}
-      name={name}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      required={required}
-      disabled={disabled}
-      minLength={minLength}
-      maxLength={maxLength}
-      className={inputClasses}
-      {...props}
-    />
-  );
+    // Support both controlled (value/onChange) and uncontrolled (react-hook-form) modes
+    // Spread props first (contains react-hook-form's onChange, onBlur, name, ref)
+    // Then override with explicit value/onChange if provided (controlled mode)
+    const inputProps = {
+      type,
+      id,
+      placeholder,
+      required,
+      disabled,
+      minLength,
+      maxLength,
+      className: inputClasses,
+      ...props, // Spread props first (react-hook-form props including ref, onChange, onBlur, name come here)
+    };
 
-  if (label) {
-    return (
-      <div>
-        <label
-          htmlFor={id}
-          className="block text-sm font-medium text-purple-900 dark:text-purple-200 mb-2"
-        >
-          {label} {labelSuffix}
-        </label>
-        {inputElement}
-      </div>
-    );
+    // Only override value/onChange if explicitly provided (controlled mode)
+    // Otherwise, react-hook-form will handle it via register (already in ...props)
+    if (value !== undefined) {
+      inputProps.value = value;
+    }
+    if (onChange) {
+      inputProps.onChange = onChange;
+    }
+
+    // Ensure name is set (either from props or explicit)
+    // react-hook-form's name from register() takes precedence
+    if (name && !inputProps.name) {
+      inputProps.name = name;
+    }
+
+    // Merge refs: react-hook-form's ref (from ...props) takes precedence, but also support forwardRef
+    // If both exist, react-hook-form's ref is used (it's in ...props.ref)
+    // If only forwardRef ref exists, use it
+    if (ref && !inputProps.ref) {
+      inputProps.ref = ref;
+    }
+
+    const inputElement = <input {...inputProps} />;
+
+    if (label) {
+      return (
+        <div>
+          <label
+            htmlFor={id}
+            className="block text-sm font-medium text-purple-900 dark:text-purple-200 mb-2"
+          >
+            {label} {labelSuffix}
+          </label>
+          {inputElement}
+        </div>
+      );
+    }
+
+    return inputElement;
   }
+);
 
-  return inputElement;
-}
+Input.displayName = 'Input';
+
+export default Input;

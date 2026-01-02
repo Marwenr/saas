@@ -10,6 +10,7 @@ import mongoose from 'mongoose';
 
 import aiRoutes from './routes/aiRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import brandRoutes from './routes/brandRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
 import customerRoutes from './routes/customerRoutes.js';
 import inventoryRoutes from './routes/inventoryRoutes.js';
@@ -81,6 +82,7 @@ async function registerRoutes() {
   // API routes
   await fastify.register(authRoutes, { prefix: '/api/auth' });
   await fastify.register(companyRoutes, { prefix: '/api/company' });
+  await fastify.register(brandRoutes, { prefix: '/api/brands' });
   await fastify.register(productRoutes, { prefix: '/api/products' });
   await fastify.register(inventoryRoutes, { prefix: '/api/inventory' });
   await fastify.register(posRoutes, { prefix: '/api/pos' });

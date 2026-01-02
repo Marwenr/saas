@@ -1,6 +1,9 @@
 /**
  * Product controller for auto parts catalogue
  */
+import mongoose from 'mongoose';
+
+import Brand from '../models/brand.model.js';
 import Product from '../models/product.model.js';
 import { getCompanyFilter, getUserCompanyId } from '../utils/company.js';
 import { calculateRecommendedSalePrice } from '../utils/pricing.js';
@@ -20,6 +23,73 @@ function computeRecommendedSupplierId(supplierInfos) {
     }
   }
   return best && best.supplierId ? best.supplierId : null;
+}
+
+/**
+ * Helper function to find or create a brand by name
+ * @param {string} companyId - Company ID
+ * @param {string|ObjectId} brandInput - Brand name (string) or Brand ID (ObjectId)
+ * @returns {Promise<ObjectId|null>} Brand ID or null
+ */
+async function findOrCreateBrand(companyId, brandInput) {
+  if (!brandInput) return null;
+
+  // Check if it's a valid ObjectId
+  const isValidObjectId =
+    typeof brandInput === 'object' ||
+    (typeof brandInput === 'string' &&
+      mongoose.Types.ObjectId.isValid(brandInput) &&
+      brandInput.length === 24);
+
+  if (isValidObjectId) {
+    // Check if brand exists
+    try {
+      const brand = await Brand.findOne({
+        _id: brandInput,
+        companyId,
+      });
+      return brand ? brand._id : null;
+    } catch (error) {
+      // If casting fails, treat it as a string name
+      // Fall through to string handling below
+    }
+  }
+
+  // If it's a string (or invalid ObjectId), treat it as a brand name
+  if (typeof brandInput === 'string') {
+    const brandName = brandInput.trim();
+    if (!brandName) return null;
+
+    // Try to find existing brand
+    let brand = await Brand.findOne({
+      companyId,
+      name: brandName,
+    });
+
+    // If not found, create it
+    if (!brand) {
+      try {
+        brand = await Brand.create({
+          companyId,
+          name: brandName,
+        });
+      } catch (error) {
+        // If creation fails due to duplicate (race condition), find it again
+        if (error.code === 11000) {
+          brand = await Brand.findOne({
+            companyId,
+            name: brandName,
+          });
+        } else {
+          throw error;
+        }
+      }
+    }
+
+    return brand ? brand._id : null;
+  }
+
+  return null;
 }
 
 /**
@@ -123,12 +193,36 @@ export async function getProducts(request, reply) {
       filter.isActive = isActive;
     }
 
-    // Get products
+    // Get products and populate brand safely (handle legacy string values)
     const products = await Product.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean();
+
+    // Safely populate brand for each product
+    for (const product of products) {
+      if (product.brand) {
+        // Only populate if brand is a valid ObjectId
+        if (
+          mongoose.Types.ObjectId.isValid(product.brand) &&
+          String(product.brand).length === 24
+        ) {
+          try {
+            const brand = await Brand.findById(product.brand)
+              .select('name')
+              .lean();
+            product.brand = brand || null;
+          } catch (error) {
+            // If populate fails, set to null
+            product.brand = null;
+          }
+        } else {
+          // Legacy string value - set to null (or you could migrate it)
+          product.brand = null;
+        }
+      }
+    }
 
     // Get total count for pagination
     const total = await Product.countDocuments(filter);
@@ -163,6 +257,26 @@ export async function getProduct(request, reply) {
       ...companyFilter,
       isDeleted: false,
     }).lean();
+
+    // Safely populate brand if it exists and is a valid ObjectId
+    if (product && product.brand) {
+      if (
+        mongoose.Types.ObjectId.isValid(product.brand) &&
+        String(product.brand).length === 24
+      ) {
+        try {
+          const brand = await Brand.findById(product.brand)
+            .select('name')
+            .lean();
+          product.brand = brand || null;
+        } catch (error) {
+          product.brand = null;
+        }
+      } else {
+        // Legacy string value
+        product.brand = null;
+      }
+    }
 
     if (!product) {
       return reply.code(404).send({
@@ -266,6 +380,9 @@ export async function createProduct(request, reply) {
       }
     }
 
+    // Find or create brand
+    const brandId = await findOrCreateBrand(companyId, brand);
+
     // Prepare product data
     const productData = {
       companyId,
@@ -274,7 +391,7 @@ export async function createProduct(request, reply) {
       oemRefs: normalizedOemRefs.length > 0 ? normalizedOemRefs : undefined,
       name,
       description,
-      brand,
+      brand: brandId || undefined,
       category,
       subCategory,
       purchasePrice,
@@ -310,6 +427,16 @@ export async function createProduct(request, reply) {
 
     // Create product
     const product = await Product.create(productData);
+
+    // Populate brand before returning (if it exists and is valid)
+    if (product.brand) {
+      try {
+        await product.populate('brand', 'name');
+      } catch (error) {
+        // If populate fails (invalid ObjectId), set to null
+        product.brand = null;
+      }
+    }
 
     return reply.code(201).send({ product });
   } catch (error) {
@@ -419,7 +546,10 @@ export async function updateProduct(request, reply) {
     }
     if (name !== undefined) product.name = name;
     if (description !== undefined) product.description = description;
-    if (brand !== undefined) product.brand = brand;
+    if (brand !== undefined) {
+      const brandId = await findOrCreateBrand(product.companyId, brand);
+      product.brand = brandId || undefined;
+    }
     if (category !== undefined) product.category = category;
     if (subCategory !== undefined) product.subCategory = subCategory;
     if (taxRate !== undefined) product.taxRate = taxRate;
@@ -455,6 +585,16 @@ export async function updateProduct(request, reply) {
     }
 
     await product.save();
+
+    // Populate brand before returning (if it exists and is valid)
+    if (product.brand) {
+      try {
+        await product.populate('brand', 'name');
+      } catch (error) {
+        // If populate fails (invalid ObjectId), set to null
+        product.brand = null;
+      }
+    }
 
     return reply.send({ product });
   } catch (error) {

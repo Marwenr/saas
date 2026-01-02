@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '../../lib/useAuth';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
@@ -23,37 +24,31 @@ export default function RegisterPage() {
   const router = useRouter();
   const { registerCompanyOwner } = useAuth(); // Get registerCompanyOwner function from auth context
 
-  // Company fields
-  const [companyName, setCompanyName] = useState('');
-  const [companyEmail, setCompanyEmail] = useState('');
-  const [companyPhone, setCompanyPhone] = useState('');
-  const [companyCountry, setCompanyCountry] = useState('TN');
-
-  // Owner user fields
-  const [ownerEmail, setOwnerEmail] = useState('');
-  const [ownerPassword, setOwnerPassword] = useState('');
-  const [ownerPasswordConfirm, setOwnerPasswordConfirm] = useState('');
-  const [ownerFullName, setOwnerFullName] = useState('');
-
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async e => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      companyName: '',
+      companyEmail: '',
+      companyPhone: '',
+      companyCountry: 'TN',
+      ownerEmail: '',
+      ownerPassword: '',
+      ownerPasswordConfirm: '',
+      ownerFullName: '',
+    },
+  });
+
+  const password = watch('ownerPassword');
+
+  const onSubmit = async data => {
     setError('');
-
-    // Validate password confirmation
-    if (ownerPassword !== ownerPasswordConfirm) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    // Validate minimum password length
-    if (ownerPassword.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
     setLoading(true);
 
     try {
@@ -62,15 +57,15 @@ export default function RegisterPage() {
       // Global auth state is automatically updated via AuthContext
       await registerCompanyOwner({
         company: {
-          name: companyName,
-          email: companyEmail,
-          phone: companyPhone || undefined,
-          country: companyCountry,
+          name: data.companyName,
+          email: data.companyEmail,
+          phone: data.companyPhone || undefined,
+          country: data.companyCountry,
         },
         user: {
-          email: ownerEmail,
-          password: ownerPassword,
-          fullName: ownerFullName || undefined,
+          email: data.ownerEmail,
+          password: data.ownerPassword,
+          fullName: data.ownerFullName || undefined,
         },
       });
 
@@ -103,59 +98,71 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {/* Company Information Section */}
             <div>
               <h2 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-4 pb-2 border-b border-purple-200 dark:border-purple-800">
                 Company Information
               </h2>
               <div className="space-y-4">
-                <Input
-                  type="text"
-                  id="companyName"
-                  name="companyName"
-                  label="Company Name"
-                  labelSuffix={<span className="text-red-500">*</span>}
-                  value={companyName}
-                  onChange={e => setCompanyName(e.target.value)}
-                  placeholder="My Auto Parts Store"
-                  required
-                  disabled={loading}
-                />
+                <div>
+                  <Input
+                    type="text"
+                    id="companyName"
+                    label="Company Name"
+                    labelSuffix={<span className="text-red-500">*</span>}
+                    placeholder="My Auto Parts Store"
+                    disabled={loading}
+                    {...register('companyName', {
+                      required: 'Company name is required',
+                    })}
+                  />
+                  {errors.companyName && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.companyName.message}
+                    </p>
+                  )}
+                </div>
 
-                <Input
-                  type="email"
-                  id="companyEmail"
-                  name="companyEmail"
-                  label="Company Email"
-                  labelSuffix={<span className="text-red-500">*</span>}
-                  value={companyEmail}
-                  onChange={e => setCompanyEmail(e.target.value)}
-                  placeholder="company@example.com"
-                  required
-                  disabled={loading}
-                />
+                <div>
+                  <Input
+                    type="email"
+                    id="companyEmail"
+                    label="Company Email"
+                    labelSuffix={<span className="text-red-500">*</span>}
+                    placeholder="company@example.com"
+                    disabled={loading}
+                    {...register('companyEmail', {
+                      required: 'Company email is required',
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Invalid email address',
+                      },
+                    })}
+                  />
+                  {errors.companyEmail && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.companyEmail.message}
+                    </p>
+                  )}
+                </div>
 
                 <Input
                   type="tel"
                   id="companyPhone"
-                  name="companyPhone"
                   label="Company Phone"
-                  value={companyPhone}
-                  onChange={e => setCompanyPhone(e.target.value)}
                   placeholder="+216 XX XXX XXX"
                   disabled={loading}
+                  {...register('companyPhone')}
                 />
 
                 <Input
                   type="text"
                   id="companyCountry"
-                  name="companyCountry"
                   label="Country"
-                  value={companyCountry}
-                  onChange={e => setCompanyCountry(e.target.value)}
                   placeholder="TN"
                   disabled={loading}
+                  {...register('companyCountry')}
                 />
               </div>
             </div>
@@ -169,59 +176,83 @@ export default function RegisterPage() {
                 <Input
                   type="text"
                   id="ownerFullName"
-                  name="ownerFullName"
                   label="Full Name"
-                  value={ownerFullName}
-                  onChange={e => setOwnerFullName(e.target.value)}
                   placeholder="John Doe"
                   disabled={loading}
+                  {...register('ownerFullName')}
                 />
 
-                <Input
-                  type="email"
-                  id="ownerEmail"
-                  name="ownerEmail"
-                  label="Email Address"
-                  labelSuffix={<span className="text-red-500">*</span>}
-                  value={ownerEmail}
-                  onChange={e => setOwnerEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  required
-                  disabled={loading}
-                />
+                <div>
+                  <Input
+                    type="email"
+                    id="ownerEmail"
+                    label="Email Address"
+                    labelSuffix={<span className="text-red-500">*</span>}
+                    placeholder="you@example.com"
+                    disabled={loading}
+                    {...register('ownerEmail', {
+                      required: 'Email address is required',
+                      pattern: {
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        message: 'Invalid email address',
+                      },
+                    })}
+                  />
+                  {errors.ownerEmail && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.ownerEmail.message}
+                    </p>
+                  )}
+                </div>
 
                 <div>
                   <Input
                     type="password"
                     id="ownerPassword"
-                    name="ownerPassword"
                     label="Password"
                     labelSuffix={<span className="text-red-500">*</span>}
-                    value={ownerPassword}
-                    onChange={e => setOwnerPassword(e.target.value)}
                     placeholder="••••••••"
-                    required
                     disabled={loading}
-                    minLength={6}
+                    {...register('ownerPassword', {
+                      required: 'Password is required',
+                      minLength: {
+                        value: 6,
+                        message: 'Password must be at least 6 characters',
+                      },
+                    })}
                   />
-                  <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
-                    Must be at least 6 characters
-                  </p>
+                  {errors.ownerPassword && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.ownerPassword.message}
+                    </p>
+                  )}
+                  {!errors.ownerPassword && (
+                    <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
+                      Must be at least 6 characters
+                    </p>
+                  )}
                 </div>
 
-                <Input
-                  type="password"
-                  id="ownerPasswordConfirm"
-                  name="ownerPasswordConfirm"
-                  label="Confirm Password"
-                  labelSuffix={<span className="text-red-500">*</span>}
-                  value={ownerPasswordConfirm}
-                  onChange={e => setOwnerPasswordConfirm(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                  disabled={loading}
-                  minLength={6}
-                />
+                <div>
+                  <Input
+                    type="password"
+                    id="ownerPasswordConfirm"
+                    label="Confirm Password"
+                    labelSuffix={<span className="text-red-500">*</span>}
+                    placeholder="••••••••"
+                    disabled={loading}
+                    {...register('ownerPasswordConfirm', {
+                      required: 'Please confirm your password',
+                      validate: value =>
+                        value === password || 'Passwords do not match',
+                    })}
+                  />
+                  {errors.ownerPasswordConfirm && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.ownerPasswordConfirm.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 

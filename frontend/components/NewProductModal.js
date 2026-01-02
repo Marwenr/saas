@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { createProduct } from '../lib/products';
+import { fetchBrands, createBrand } from '../lib/brands';
 import Input from './Input';
 
 /**
@@ -12,58 +14,132 @@ import Input from './Input';
 export default function NewProductModal({ onClose, onCreated }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    sku: '',
-    name: '',
-    brand: '',
-    purchasePrice: '',
-    salePrice: '',
-    taxRate: '0',
-    marginRate: '0',
+  const [brandSuggestions, setBrandSuggestions] = useState([]);
+  const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
+  const [brandSearchTerm, setBrandSearchTerm] = useState('');
+  const brandInputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      sku: '',
+      name: '',
+      brand: '',
+      brandId: null,
+      purchasePrice: '',
+      salePrice: '',
+      taxRate: '0',
+      marginRate: '0',
+    },
   });
+
+  const purchasePrice = watch('purchasePrice');
+  const marginRate = watch('marginRate');
+  const brand = watch('brand');
+
+  // Fetch brand suggestions when search term changes
+  useEffect(() => {
+    const searchBrands = async () => {
+      if (brandSearchTerm.trim().length > 0) {
+        try {
+          const response = await fetchBrands({ search: brandSearchTerm });
+          setBrandSuggestions(response.brands || []);
+          setShowBrandSuggestions(true);
+        } catch (err) {
+          console.error('Failed to fetch brands:', err);
+          setBrandSuggestions([]);
+        }
+      } else {
+        setBrandSuggestions([]);
+        setShowBrandSuggestions(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(searchBrands, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [brandSearchTerm]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        brandInputRef.current &&
+        !brandInputRef.current.contains(event.target)
+      ) {
+        setShowBrandSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Auto-calculate salePrice when purchasePrice or marginRate changes
   useEffect(() => {
-    const purchasePrice = parseFloat(formData.purchasePrice);
-    const marginRate = parseFloat(formData.marginRate) || 0;
+    const price = parseFloat(purchasePrice);
+    const margin = parseFloat(marginRate) || 0;
 
     // Only auto-calculate if purchasePrice is provided and valid
-    if (purchasePrice > 0 && !isNaN(purchasePrice) && marginRate >= 0) {
-      const calculatedSalePrice = purchasePrice * (1 + marginRate / 100);
-      setFormData(prev => ({
-        ...prev,
-        salePrice: calculatedSalePrice.toFixed(2),
-      }));
+    if (price > 0 && !isNaN(price) && margin >= 0) {
+      const calculatedSalePrice = price * (1 + margin / 100);
+      setValue('salePrice', calculatedSalePrice.toFixed(2));
     }
-  }, [formData.purchasePrice, formData.marginRate]);
+  }, [purchasePrice, marginRate, setValue]);
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+  const handleBrandChange = e => {
+    const value = e.target.value;
+    setBrandSearchTerm(value);
+    setValue('brand', value);
+    setValue('brandId', null); // Reset brandId when user types
   };
 
-  const handleSubmit = async e => {
-    e.preventDefault();
+  const handleBrandSelect = selectedBrand => {
+    setValue('brand', selectedBrand.name);
+    setValue('brandId', selectedBrand._id);
+    setBrandSearchTerm(selectedBrand.name);
+    setShowBrandSuggestions(false);
+  };
+
+  const handleBrandCreate = async () => {
+    if (!brandSearchTerm.trim()) return;
+
+    try {
+      const response = await createBrand({ name: brandSearchTerm.trim() });
+      const newBrand = response.brand;
+      handleBrandSelect(newBrand);
+    } catch (err) {
+      console.error('Failed to create brand:', err);
+      setError(err.message || 'Échec de la création de la marque');
+    }
+  };
+
+  const onSubmit = async data => {
     setError(null);
     setLoading(true);
 
     try {
       // Prepare payload
+      // Use brandId if available, otherwise use brand name (for backward compatibility or new creation)
+      const brandPayload = data.brandId || data.brand.trim() || undefined;
+
       const payload = {
-        sku: formData.sku.trim(),
-        name: formData.name.trim(),
-        brand: formData.brand.trim() || undefined,
-        purchasePrice: formData.purchasePrice
-          ? parseFloat(formData.purchasePrice)
+        sku: data.sku.trim(),
+        name: data.name.trim(),
+        brand: brandPayload,
+        purchasePrice: data.purchasePrice
+          ? parseFloat(data.purchasePrice)
           : undefined,
-        salePrice: formData.salePrice
-          ? parseFloat(formData.salePrice)
-          : undefined,
-        taxRate: formData.taxRate ? parseFloat(formData.taxRate) : 0,
-        marginRate: formData.marginRate ? parseFloat(formData.marginRate) : 0,
+        salePrice: data.salePrice ? parseFloat(data.salePrice) : undefined,
+        taxRate: data.taxRate ? parseFloat(data.taxRate) : 0,
+        marginRate: data.marginRate ? parseFloat(data.marginRate) : 0,
       };
 
       // Validate required fields
@@ -136,7 +212,7 @@ export default function NewProductModal({ onClose, onCreated }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
           {/* Error message */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -148,43 +224,91 @@ export default function NewProductModal({ onClose, onCreated }) {
           <div className="space-y-4">
             {/* SKU and Name - Required */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                id="sku"
-                name="sku"
-                label="SKU"
-                labelSuffix={<span className="text-red-500">*</span>}
-                value={formData.sku}
-                onChange={handleChange}
-                placeholder="SKU-001"
-                required
-                disabled={loading}
-              />
-              <Input
-                type="text"
-                id="name"
-                name="name"
-                label="Nom"
-                labelSuffix={<span className="text-red-500">*</span>}
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Nom du produit"
-                required
-                disabled={loading}
-              />
+              <div>
+                <Input
+                  type="text"
+                  id="sku"
+                  label="SKU"
+                  labelSuffix={<span className="text-red-500">*</span>}
+                  placeholder="SKU-001"
+                  disabled={loading}
+                  {...register('sku', {
+                    required: 'SKU is required',
+                  })}
+                />
+                {errors.sku && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.sku.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <Input
+                  type="text"
+                  id="name"
+                  label="Nom"
+                  labelSuffix={<span className="text-red-500">*</span>}
+                  placeholder="Nom du produit"
+                  disabled={loading}
+                  {...register('name', {
+                    required: 'Name is required',
+                  })}
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.name.message}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Brand */}
-            <Input
-              type="text"
-              id="brand"
-              name="brand"
-              label="Marque"
-              value={formData.brand}
-              onChange={handleChange}
-              placeholder="Marque (optionnel)"
-              disabled={loading}
-            />
+            <div className="relative" ref={brandInputRef}>
+              <Input
+                type="text"
+                id="brand"
+                label="Marque"
+                placeholder="Rechercher ou ajouter une marque"
+                disabled={loading}
+                value={brand}
+                onChange={handleBrandChange}
+                autoComplete="off"
+              />
+              {showBrandSuggestions && brandSuggestions.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                >
+                  {brandSuggestions.map(brandItem => (
+                    <button
+                      key={brandItem._id}
+                      type="button"
+                      onClick={() => handleBrandSelect(brandItem)}
+                      className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors"
+                    >
+                      {brandItem.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {showBrandSuggestions &&
+                brandSearchTerm.trim() &&
+                brandSuggestions.length === 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg"
+                  >
+                    <button
+                      type="button"
+                      onClick={handleBrandCreate}
+                      className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors flex items-center gap-2"
+                    >
+                      <span>+</span>
+                      <span>Ajouter "{brandSearchTerm.trim()}"</span>
+                    </button>
+                  </div>
+                )}
+            </div>
 
             {/* Prices */}
             <div className="space-y-4">
@@ -192,61 +316,66 @@ export default function NewProductModal({ onClose, onCreated }) {
                 <Input
                   type="number"
                   id="purchasePrice"
-                  name="purchasePrice"
                   label="Prix d'achat (HT) (TND)"
-                  value={formData.purchasePrice}
-                  onChange={handleChange}
                   placeholder="0.00"
                   min="0"
                   step="0.01"
                   disabled={loading}
+                  {...register('purchasePrice', {
+                    min: { value: 0, message: 'Must be >= 0' },
+                    valueAsNumber: true,
+                  })}
                 />
                 <Input
                   type="number"
                   id="marginRate"
-                  name="marginRate"
                   label="Taux de gain (%)"
                   labelSuffix={
                     <span className="text-gray-500 text-xs">(marginRate)</span>
                   }
-                  value={formData.marginRate}
-                  onChange={handleChange}
                   placeholder="0"
                   min="0"
                   step="0.01"
                   disabled={loading}
+                  {...register('marginRate', {
+                    min: { value: 0, message: 'Must be >= 0' },
+                    valueAsNumber: true,
+                  })}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   type="number"
                   id="salePrice"
-                  name="salePrice"
                   label="Prix de vente (HT) (TND)"
                   labelSuffix={
                     <span className="text-gray-500 text-xs ml-2">
                       (calculé automatiquement)
                     </span>
                   }
-                  value={formData.salePrice}
-                  onChange={handleChange}
                   placeholder="0.00"
                   min="0"
                   step="0.01"
                   disabled={loading}
+                  {...register('salePrice', {
+                    min: { value: 0, message: 'Must be >= 0' },
+                    valueAsNumber: true,
+                  })}
                 />
                 <Input
                   type="number"
                   id="taxRate"
-                  name="taxRate"
                   label="Taux de TVA (%)"
-                  value={formData.taxRate}
-                  onChange={handleChange}
                   placeholder="0"
                   min="0"
                   max="100"
                   step="0.01"
                   disabled={loading}
+                  {...register('taxRate', {
+                    min: { value: 0, message: 'Must be >= 0' },
+                    max: { value: 100, message: 'Must be <= 100' },
+                    valueAsNumber: true,
+                  })}
                 />
               </div>
             </div>

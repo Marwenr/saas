@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { createStockMovement } from '../lib/inventory';
 import Input from './Input';
 import { AlertTriangle, X } from 'lucide-react';
@@ -11,34 +12,35 @@ import { AlertTriangle, X } from 'lucide-react';
 export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [formData, setFormData] = useState({
-    type: 'IN',
-    quantity: '',
-    reason: '',
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      type: 'IN',
+      quantity: '',
+      reason: '',
+    },
   });
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const type = watch('type');
 
-  const handleSubmit = async e => {
-    e.preventDefault();
+  const onSubmit = async data => {
     setError(null);
     setLoading(true);
 
     try {
-      const quantity = parseFloat(formData.quantity);
+      const quantity = parseFloat(data.quantity);
 
       // Validate quantity
       if (isNaN(quantity)) {
         throw new Error('La quantité doit être un nombre valide');
       }
 
-      if (formData.type === 'ADJUST') {
+      if (data.type === 'ADJUST') {
         if (quantity < 0) {
           throw new Error(
             'La quantité doit être supérieure ou égale à 0 pour un ajustement'
@@ -58,9 +60,9 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
       // For IN/OUT, quantity is the change amount
       const payload = {
         productId: product._id || product.id,
-        type: formData.type,
+        type: data.type,
         quantity: quantity,
-        reason: formData.reason.trim() || undefined,
+        reason: data.reason.trim() || undefined,
       };
 
       await createStockMovement(payload);
@@ -157,7 +159,7 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
           {/* Error message */}
           {error && (
             <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
@@ -173,10 +175,7 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
                 Type d&apos;opération <span className="text-red-500">*</span>
               </label>
               <select
-                name="type"
-                value={formData.type}
-                onChange={handleChange}
-                required
+                {...register('type', { required: 'Type is required' })}
                 className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="IN">Entrée (Ajouter)</option>
@@ -184,7 +183,7 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
                 <option value="ADJUST">Ajustement (Définir)</option>
               </select>
               <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                {getTypeDescription(formData.type)}
+                {getTypeDescription(type)}
               </p>
             </div>
 
@@ -193,39 +192,27 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
               <Input
                 type="number"
                 id="quantity"
-                name="quantity"
-                label={
-                  formData.type === 'ADJUST' ? 'Nouveau stock' : 'Quantité'
-                }
+                label={type === 'ADJUST' ? 'Nouveau stock' : 'Quantité'}
                 labelSuffix={<span className="text-red-500">*</span>}
-                value={formData.quantity}
-                onChange={handleChange}
-                placeholder={formData.type === 'ADJUST' ? '0' : '0.00'}
-                required
-                min={formData.type === 'ADJUST' ? '0' : '0.01'}
-                step="0.01"
+                placeholder={type === 'ADJUST' ? '0' : '0.00'}
                 disabled={loading}
+                {...register('quantity', {
+                  required: 'Quantity is required',
+                  min: {
+                    value: type === 'ADJUST' ? 0 : 0.01,
+                    message:
+                      type === 'ADJUST'
+                        ? 'Quantity must be >= 0'
+                        : 'Quantity must be > 0',
+                  },
+                  valueAsNumber: true,
+                })}
               />
-              {formData.type === 'ADJUST' &&
-                formData.quantity &&
-                !isNaN(parseFloat(formData.quantity)) && (
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                    Stock actuel: {currentStock} → Nouveau:{' '}
-                    {parseFloat(formData.quantity)}
-                    {parseFloat(formData.quantity) > currentStock && (
-                      <span className="text-green-600 dark:text-green-400">
-                        {' '}
-                        (+{parseFloat(formData.quantity) - currentStock})
-                      </span>
-                    )}
-                    {parseFloat(formData.quantity) < currentStock && (
-                      <span className="text-red-600 dark:text-red-400">
-                        {' '}
-                        ({parseFloat(formData.quantity) - currentStock})
-                      </span>
-                    )}
-                  </p>
-                )}
+              {errors.quantity && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  {errors.quantity.message}
+                </p>
+              )}
             </div>
 
             {/* Reason */}
@@ -234,9 +221,7 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
                 Raison (optionnel)
               </label>
               <textarea
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
+                {...register('reason')}
                 rows={3}
                 className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                 placeholder="Ex: Réception de commande, Inventaire, etc."

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Container from '../../../components/Container';
 import AuthGuard from '../../../components/AuthGuard';
-import NewProductModal from '../../../components/NewProductModal';
+import ProductForm from '../../../components/ProductForm';
 import { useAuth } from '../../../lib/useAuth';
 import { fetchSuppliers } from '../../../lib/suppliers';
 import { fetchProducts } from '../../../lib/products';
@@ -32,9 +32,9 @@ function NewPurchaseOrderPage() {
 
   const [formData, setFormData] = useState({
     supplierId: '',
-    status: 'DRAFT', // default to 'DRAFT'
+    status: 'RECEIVED', // default to 'RECEIVED'
     orderDate: new Date().toISOString().split('T')[0],
-    expectedDate: '',
+    expectedDate: new Date().toISOString().split('T')[0],
     notes: '',
   });
 
@@ -454,7 +454,7 @@ function NewPurchaseOrderPage() {
                             {product.name || '-'}
                           </td>
                           <td className="px-4 py-2 text-sm text-[var(--text-secondary)]">
-                            {product.brand || '-'}
+                            {product.brand?.name || product.brand || '-'}
                           </td>
                           <td className="px-4 py-2 text-sm text-[var(--text-primary)] text-right">
                             {product.purchasePrice !== undefined
@@ -643,7 +643,7 @@ function NewPurchaseOrderPage() {
 
         {/* New Product Modal */}
         {showNewProductModal && (
-          <NewProductModal
+          <ProductForm
             onClose={() => setShowNewProductModal(false)}
             onCreated={handleProductCreated}
           />
