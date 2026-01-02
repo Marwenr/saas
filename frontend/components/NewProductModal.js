@@ -304,7 +304,7 @@ export default function NewProductModal({ onClose, onCreated }) {
                       className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors flex items-center gap-2"
                     >
                       <span>+</span>
-                      <span>Ajouter "{brandSearchTerm.trim()}"</span>
+                      <span>Ajouter &quot;{brandSearchTerm.trim()}&quot;</span>
                     </button>
                   </div>
                 )}
