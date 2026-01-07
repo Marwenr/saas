@@ -1,9 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Container from '../../components/Container';
 import AuthGuard from '../../components/AuthGuard';
-import Button from '../../components/Button';
+import { Button } from '../../components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/ui/card';
+import { Input } from '../../components/ui/input';
+import { Label } from '../../components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import { Badge } from '../../components/ui/badge';
 import { useAuth } from '../../lib/useAuth';
 import {
   fetchSalesSummaryReport,
@@ -21,19 +38,19 @@ import {
   AlertTriangle,
   CheckCircle,
   Trophy,
+  Loader2,
 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 function DashboardPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Summary data
   const [salesSummary, setSalesSummary] = useState(null);
   const [stockAlerts, setStockAlerts] = useState(null);
   const [topProducts, setTopProducts] = useState(null);
 
-  // Filters
   const [period, setPeriod] = useState('month');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -50,9 +67,7 @@ function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      const params = {
-        period,
-      };
+      const params = { period };
 
       if (period === 'range') {
         if (!from || !to) {
@@ -64,7 +79,6 @@ function DashboardPage() {
         params.to = to;
       }
 
-      // Load all data in parallel
       const [summaryData, alertsData, topProductsData] = await Promise.all([
         fetchSalesSummaryReport(params),
         fetchStockAlertsReport({ limit: 50 }),
@@ -97,7 +111,10 @@ function DashboardPage() {
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -120,103 +137,88 @@ function DashboardPage() {
   };
 
   return (
-    <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container fullWidth>
-        {/* Modern Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
-                Dashboard
-              </h1>
-              <p className="text-base text-[var(--text-secondary)]">
-                Overview of your sales, stock alerts, and top products
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                variant="tertiary"
-                size="md"
-                icon={<LayoutGrid className="w-5 h-5" />}
-              >
-                Customize widget
-              </Button>
-              <Button
-                variant="tertiary"
-                size="md"
-                icon={<Filter className="w-5 h-5" />}
-              >
-                Filter
-              </Button>
-              <Button
-                variant="tertiary"
-                size="md"
-                icon={<Share2 className="w-5 h-5" />}
-              >
-                Share
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Overview of your sales, stock alerts, and top products
+          </p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-2">
+            <LayoutGrid className="h-4 w-4" />
+            Customize widget
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Filter className="h-4 w-4" />
+            Filter
+          </Button>
+          <Button variant="outline" size="sm" className="gap-2">
+            <Share2 className="h-4 w-4" />
+            Share
+          </Button>
+        </div>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400">
-            {error}
-          </div>
-        )}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Period Filter - Modern Collapsible */}
-        <div className="mb-8 p-6 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                Period
-              </label>
-              <select
-                value={period}
-                onChange={e => setPeriod(e.target.value)}
-                className="w-full px-3 py-2.5 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-              >
-                <option value="day">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-                <option value="range">Custom Range</option>
-              </select>
+      {/* Period Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Filters</CardTitle>
+          <CardDescription>Select the time period and options</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="period">Period</Label>
+              <Select value={period} onValueChange={setPeriod}>
+                <SelectTrigger id="period">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="year">This Year</SelectItem>
+                  <SelectItem value="range">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {period === 'range' && (
               <>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                    From Date
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="from">From Date</Label>
+                  <Input
+                    id="from"
                     type="date"
                     value={from}
                     onChange={e => setFrom(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                    To Date
-                  </label>
-                  <input
+                <div className="space-y-2">
+                  <Label htmlFor="to">To Date</Label>
+                  <Input
+                    id="to"
                     type="date"
                     value={to}
                     onChange={e => setTo(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
                   />
                 </div>
               </>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                Top Products Limit
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="limit">Top Products Limit</Label>
+              <Input
+                id="limit"
                 type="number"
                 value={topProductsLimit}
                 onChange={e =>
@@ -226,127 +228,117 @@ function DashboardPage() {
                 }
                 min="1"
                 max="100"
-                className="w-full px-3 py-2.5 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Cards */}
+      {salesSummary?.summary && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                Sales Overview
+              </h2>
+              <p className="text-muted-foreground mt-1">
+                Key performance indicators for your business
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <KPICard
+              title="Total Sales (TND)"
+              currentValue={salesSummary.summary.totalRevenueIncl || 0}
+              previousValue={
+                salesSummary.previousSummary?.totalRevenueIncl ||
+                salesSummary.previousPeriod?.summary?.totalRevenueIncl ||
+                null
+              }
+              formatter={formatCurrency}
+              icon={<DollarSign className="w-6 h-6" />}
+              period={getPeriodLabel()}
+            />
+            <KPICard
+              title="Number of Sales"
+              currentValue={
+                salesSummary.summary.totalOrders ||
+                salesSummary.summary.totalSales ||
+                0
+              }
+              previousValue={
+                salesSummary.previousSummary?.totalOrders ||
+                salesSummary.previousSummary?.totalSales ||
+                salesSummary.previousPeriod?.summary?.totalOrders ||
+                salesSummary.previousPeriod?.summary?.totalSales ||
+                null
+              }
+              formatter={formatNumber}
+              icon={<BarChart3 className="w-6 h-6" />}
+              period={getPeriodLabel()}
+            />
+            <KPICard
+              title="Total Quantity Sold"
+              currentValue={
+                salesSummary.summary.totalQty ||
+                salesSummary.summary.totalItems ||
+                0
+              }
+              previousValue={
+                salesSummary.previousSummary?.totalQty ||
+                salesSummary.previousSummary?.totalItems ||
+                salesSummary.previousPeriod?.summary?.totalQty ||
+                salesSummary.previousPeriod?.summary?.totalItems ||
+                null
+              }
+              formatter={formatNumber}
+              icon={<Package className="w-6 h-6" />}
+              period={getPeriodLabel()}
+            />
           </div>
         </div>
+      )}
 
-        {/* Summary Cards - Modern Design */}
-        {salesSummary?.summary && (
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
-                  Sales Overview
-                </h2>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Key performance indicators for your business
-                </p>
-              </div>
-              <Button variant="primary" size="md">
-                + Add New
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <KPICard
-                title="Total Sales (TND)"
-                currentValue={salesSummary.summary.totalRevenueIncl || 0}
-                previousValue={
-                  salesSummary.previousSummary?.totalRevenueIncl ||
-                  salesSummary.previousPeriod?.summary?.totalRevenueIncl ||
-                  null
-                }
-                formatter={formatCurrency}
-                icon={<DollarSign className="w-6 h-6" />}
-                period={getPeriodLabel()}
-              />
-              <KPICard
-                title="Number of Sales"
-                currentValue={
-                  salesSummary.summary.totalOrders ||
-                  salesSummary.summary.totalSales ||
-                  0
-                }
-                previousValue={
-                  salesSummary.previousSummary?.totalOrders ||
-                  salesSummary.previousSummary?.totalSales ||
-                  salesSummary.previousPeriod?.summary?.totalOrders ||
-                  salesSummary.previousPeriod?.summary?.totalSales ||
-                  null
-                }
-                formatter={formatNumber}
-                icon={<BarChart3 className="w-6 h-6" />}
-                period={getPeriodLabel()}
-              />
-              <KPICard
-                title="Total Quantity Sold"
-                currentValue={
-                  salesSummary.summary.totalQty ||
-                  salesSummary.summary.totalItems ||
-                  0
-                }
-                previousValue={
-                  salesSummary.previousSummary?.totalQty ||
-                  salesSummary.previousSummary?.totalItems ||
-                  salesSummary.previousPeriod?.summary?.totalQty ||
-                  salesSummary.previousPeriod?.summary?.totalItems ||
-                  null
-                }
-                formatter={formatNumber}
-                icon={<Package className="w-6 h-6" />}
-                period={getPeriodLabel()}
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Stock Alerts - Modern Design */}
-          <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="p-6 border-b border-[var(--border-color)] bg-gradient-to-r from-red-50/50 to-transparent dark:from-red-900/10">
-              <div className="flex items-center justify-between">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Stock Alerts */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 <div>
-                  <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3 mb-2">
-                    <AlertTriangle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-                    <span>Stock Alerts</span>
-                  </h2>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <CardTitle>Stock Alerts</CardTitle>
+                  <CardDescription>
                     Products below minimum stock threshold
                     {stockAlerts?.totalAlerts !== undefined && (
-                      <span className="ml-2 font-semibold text-purple-600 dark:text-purple-400">
-                        ({stockAlerts.totalAlerts}{' '}
-                        {stockAlerts.totalAlerts === 1 ? 'alert' : 'alerts'})
-                      </span>
+                      <Badge variant="outline" className="ml-2">
+                        {stockAlerts.totalAlerts}{' '}
+                        {stockAlerts.totalAlerts === 1 ? 'alert' : 'alerts'}
+                      </Badge>
                     )}
-                  </p>
+                  </CardDescription>
                 </div>
               </div>
             </div>
-            <div className="p-6">
-              {stockAlerts?.items && stockAlerts.items.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {stockAlerts.items.map(item => {
-                    const progress =
-                      item.minStockQty > 0
-                        ? Math.min(
-                            (item.stockQty / item.minStockQty) * 100,
-                            100
-                          )
-                        : 0;
-                    const isCritical = item.difference < 0;
+          </CardHeader>
+          <CardContent>
+            {stockAlerts?.items && stockAlerts.items.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {stockAlerts.items.map(item => {
+                  const progress =
+                    item.minStockQty > 0
+                      ? Math.min((item.stockQty / item.minStockQty) * 100, 100)
+                      : 0;
+                  const isCritical = item.difference < 0;
 
-                    return (
-                      <div
-                        key={item.productId}
-                        className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-color)] hover:shadow-sm transition-shadow"
-                      >
+                  return (
+                    <Card key={item.productId} className="border shadow-sm">
+                      <CardContent className="pt-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex-1">
-                            <div className="font-medium text-[var(--text-primary)]">
-                              {item.name}
-                            </div>
-                            <div className="text-sm text-[var(--text-secondary)] mt-1">
+                            <div className="font-medium">{item.name}</div>
+                            <div className="text-sm text-muted-foreground mt-1">
                               SKU: {item.sku}
                               {item.brand &&
                                 ` • ${item.brand?.name || item.brand}`}
@@ -354,58 +346,60 @@ function DashboardPage() {
                           </div>
                           <div className="text-right ml-4">
                             <div
-                              className={`text-xl font-bold ${
+                              className={cn(
+                                'text-xl font-bold',
                                 isCritical
-                                  ? 'text-red-600 dark:text-red-400'
+                                  ? 'text-destructive'
                                   : 'text-orange-600 dark:text-orange-400'
-                              }`}
+                              )}
                             >
                               {item.stockQty}
                             </div>
-                            <div className="text-xs text-[var(--text-secondary)]">
+                            <div className="text-xs text-muted-foreground">
                               / {item.minStockQty} min
                             </div>
                           </div>
                         </div>
                         <div className="mb-2">
-                          <div className="h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                          <div className="h-2 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all ${
+                              className={cn(
+                                'h-full rounded-full transition-all',
                                 isCritical
-                                  ? 'bg-red-500 dark:bg-red-600'
+                                  ? 'bg-destructive'
                                   : 'bg-orange-500 dark:bg-orange-600'
-                              }`}
+                              )}
                               style={{ width: `${Math.max(progress, 5)}%` }}
                             />
                           </div>
                         </div>
-                        <div className="text-xs text-[var(--text-secondary)]">
+                        <div className="text-xs text-muted-foreground">
                           Difference: {item.difference > 0 ? '+' : ''}
                           {item.difference} units
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-[var(--text-secondary)]">
-                  <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                  <div>No stock alerts. All products are well stocked!</div>
-                </div>
-              )}
-            </div>
-          </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-2" />
+                <div>No stock alerts. All products are well stocked!</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Top Products - Modern Design */}
-          <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="p-6 border-b border-[var(--border-color)] bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10">
-              <div className="flex items-center justify-between">
+        {/* Top Products */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 <div>
-                  <h2 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-3 mb-2">
-                    <Trophy className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
-                    <span>Top Products</span>
-                  </h2>
-                  <p className="text-sm text-[var(--text-secondary)]">
+                  <CardTitle>Top Products</CardTitle>
+                  <CardDescription>
                     Best-selling products by quantity
                     {topProducts?.dateRange && (
                       <span className="ml-2">
@@ -420,35 +414,34 @@ function DashboardPage() {
                         )
                       </span>
                     )}
-                  </p>
+                  </CardDescription>
                 </div>
               </div>
             </div>
-            <div className="p-6">
-              {topProducts?.products && topProducts.products.length > 0 ? (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {topProducts.products.map((product, index) => {
-                    const maxQty = Math.max(
-                      ...topProducts.products.map(p => p.totalQty)
-                    );
-                    const progress =
-                      maxQty > 0 ? (product.totalQty / maxQty) * 100 : 0;
+          </CardHeader>
+          <CardContent>
+            {topProducts?.products && topProducts.products.length > 0 ? (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {topProducts.products.map((product, index) => {
+                  const maxQty = Math.max(
+                    ...topProducts.products.map(p => p.totalQty)
+                  );
+                  const progress =
+                    maxQty > 0 ? (product.totalQty / maxQty) * 100 : 0;
 
-                    return (
-                      <div
-                        key={product.productId}
-                        className="p-4 bg-[var(--bg-tertiary)] rounded-lg border border-[var(--border-color)] hover:shadow-sm transition-shadow"
-                      >
+                  return (
+                    <Card key={product.productId} className="border shadow-sm">
+                      <CardContent className="pt-4">
                         <div className="flex justify-between items-start mb-3">
                           <div className="flex items-start gap-3 flex-1">
-                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-sm font-bold text-purple-700 dark:text-purple-300">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
                               {index + 1}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium text-[var(--text-primary)] truncate">
+                              <div className="font-medium truncate">
                                 {product.name}
                               </div>
-                              <div className="text-sm text-[var(--text-secondary)] mt-1">
+                              <div className="text-sm text-muted-foreground mt-1">
                                 SKU: {product.sku}
                                 {product.brand &&
                                   ` • ${product.brand?.name || product.brand}`}
@@ -456,10 +449,10 @@ function DashboardPage() {
                             </div>
                           </div>
                           <div className="text-right ml-4">
-                            <div className="text-xl font-bold text-[var(--text-primary)]">
+                            <div className="text-xl font-bold">
                               {formatNumber(product.totalQty)}
                             </div>
-                            <div className="text-xs text-[var(--text-secondary)]">
+                            <div className="text-xs text-muted-foreground">
                               units sold
                             </div>
                             <div className="text-sm font-medium text-green-600 dark:text-green-400 mt-1">
@@ -467,34 +460,34 @@ function DashboardPage() {
                             </div>
                           </div>
                         </div>
-                        <div className="h-2 bg-[var(--bg-secondary)] rounded-full overflow-hidden">
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
                           <div
-                            className="h-full rounded-full bg-purple-500 dark:bg-purple-600 transition-all"
+                            className="h-full rounded-full bg-primary transition-all"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-[var(--text-secondary)]">
-                  <BarChart3 className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                  <div>No sales data found for the selected period</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                <div>No sales data found for the selected period</div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Date Range Info */}
-        {salesSummary?.dateRange && (
-          <div className="mt-6 text-sm text-[var(--text-secondary)] text-center">
-            Period: {new Date(salesSummary.dateRange.from).toLocaleDateString()}{' '}
-            - {new Date(salesSummary.dateRange.to).toLocaleDateString()}
-          </div>
-        )}
-      </Container>
+      {/* Date Range Info */}
+      {salesSummary?.dateRange && (
+        <div className="text-sm text-muted-foreground text-center">
+          Period: {new Date(salesSummary.dateRange.from).toLocaleDateString()} -{' '}
+          {new Date(salesSummary.dateRange.to).toLocaleDateString()}
+        </div>
+      )}
     </div>
   );
 }

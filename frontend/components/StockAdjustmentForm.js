@@ -3,22 +3,52 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { createStockMovement } from '../lib/inventory';
-import Input from './Input';
-import { AlertTriangle, X } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { Alert, AlertDescription } from './ui/alert';
+import { Badge } from './ui/badge';
+import { AlertTriangle, X, Loader2 } from 'lucide-react';
+import { useToast } from './ui/use-toast';
 
 /**
  * StockAdjustmentForm component - Modal form for adjusting stock
  */
-export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
-  const [loading, setLoading] = useState(false);
+export default function StockAdjustmentForm({
+  product,
+  onClose,
+  onSuccess,
+  open = true,
+}) {
+  const { toast } = useToast();
   const [error, setError] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const form = useForm({
     defaultValues: {
       type: 'IN',
       quantity: '',
@@ -26,16 +56,14 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
     },
   });
 
-  const type = watch('type');
+  const type = form.watch('type');
 
   const onSubmit = async data => {
     setError(null);
-    setLoading(true);
 
     try {
       const quantity = parseFloat(data.quantity);
 
-      // Validate quantity
       if (isNaN(quantity)) {
         throw new Error('La quantité doit être un nombre valide');
       }
@@ -47,7 +75,6 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
           );
         }
       } else {
-        // For IN and OUT, quantity must be > 0
         if (quantity <= 0) {
           throw new Error(
             'La quantité doit être supérieure à 0 pour une entrée ou sortie'
@@ -55,9 +82,6 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
         }
       }
 
-      // Prepare payload
-      // For ADJUST type, quantity is the target stock level
-      // For IN/OUT, quantity is the change amount
       const payload = {
         productId: product._id || product.id,
         type: data.type,
@@ -66,6 +90,10 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
       };
 
       await createStockMovement(payload);
+      toast({
+        title: 'Stock adjusted',
+        description: 'Stock has been adjusted successfully.',
+      });
 
       if (onSuccess) {
         onSuccess();
@@ -74,8 +102,6 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
     } catch (err) {
       console.error('Failed to create stock movement:', err);
       setError(err.message || "Échec de l'ajustement de stock");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -109,145 +135,146 @@ export default function StockAdjustmentForm({ product, onClose, onSuccess }) {
   const minStock = product.minStock !== undefined ? product.minStock : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-[var(--bg-primary)] rounded-lg shadow-xl max-w-md w-full">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
-          <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)]">
-              Ajuster le stock
-            </h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
-              {product.name || product.sku}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            aria-label="Fermer"
-          >
-            <X className="w-6 h-6" />
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Ajuster le stock</DialogTitle>
+          <DialogDescription>{product.name || product.sku}</DialogDescription>
+        </DialogHeader>
 
         {/* Current stock info */}
-        <div className="p-6 border-b border-[var(--border-color)] bg-[var(--bg-secondary)]">
+        <div className="p-4 border rounded-lg bg-muted">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <div className="text-sm text-[var(--text-secondary)]">
-                Stock actuel
-              </div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">
-                {currentStock}
-              </div>
+              <div className="text-sm text-muted-foreground">Stock actuel</div>
+              <div className="text-lg font-semibold">{currentStock}</div>
             </div>
             <div>
-              <div className="text-sm text-[var(--text-secondary)]">
-                Stock minimum
-              </div>
-              <div className="text-lg font-semibold text-[var(--text-primary)]">
-                {minStock}
-              </div>
+              <div className="text-sm text-muted-foreground">Stock minimum</div>
+              <div className="text-lg font-semibold">{minStock}</div>
             </div>
           </div>
           {currentStock <= minStock && (
-            <div className="mt-3 p-2 bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-400 dark:border-yellow-700 rounded text-yellow-700 dark:text-yellow-400 text-sm">
-              <AlertTriangle className="w-4 h-4 inline mr-1" />
-              Stock faible
-            </div>
+            <Alert variant="destructive" className="mt-3">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>Stock faible</AlertDescription>
+            </Alert>
           )}
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
 
-          {/* Form fields */}
-          <div className="space-y-4">
-            {/* Type */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                Type d&apos;opération <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...register('type', { required: 'Type is required' })}
-                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="IN">Entrée (Ajouter)</option>
-                <option value="OUT">Sortie (Retirer)</option>
-                <option value="ADJUST">Ajustement (Définir)</option>
-              </select>
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                {getTypeDescription(type)}
-              </p>
-            </div>
-
-            {/* Quantity */}
-            <div>
-              <Input
-                type="number"
-                id="quantity"
-                label={type === 'ADJUST' ? 'Nouveau stock' : 'Quantité'}
-                labelSuffix={<span className="text-red-500">*</span>}
-                placeholder={type === 'ADJUST' ? '0' : '0.00'}
-                disabled={loading}
-                {...register('quantity', {
-                  required: 'Quantity is required',
-                  min: {
-                    value: type === 'ADJUST' ? 0 : 0.01,
-                    message:
-                      type === 'ADJUST'
-                        ? 'Quantity must be >= 0'
-                        : 'Quantity must be > 0',
-                  },
-                  valueAsNumber: true,
-                })}
-              />
-              {errors.quantity && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.quantity.message}
-                </p>
+            <FormField
+              control={form.control}
+              name="type"
+              rules={{ required: 'Type is required' }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    Type d'opération <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="IN">Entrée (Ajouter)</SelectItem>
+                      <SelectItem value="OUT">Sortie (Retirer)</SelectItem>
+                      <SelectItem value="ADJUST">
+                        Ajustement (Définir)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>{getTypeDescription(type)}</FormDescription>
+                  <FormMessage />
+                </FormItem>
               )}
-            </div>
+            />
 
-            {/* Reason */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">
-                Raison (optionnel)
-              </label>
-              <textarea
-                {...register('reason')}
-                rows={3}
-                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Ex: Réception de commande, Inventaire, etc."
-              />
-            </div>
-          </div>
+            <FormField
+              control={form.control}
+              name="quantity"
+              rules={{
+                required: 'Quantity is required',
+                min: {
+                  value: type === 'ADJUST' ? 0 : 0.01,
+                  message:
+                    type === 'ADJUST'
+                      ? 'Quantity must be >= 0'
+                      : 'Quantity must be > 0',
+                },
+              }}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>
+                    {type === 'ADJUST' ? 'Nouveau stock' : 'Quantité'}{' '}
+                    <span className="text-destructive">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder={type === 'ADJUST' ? '0' : '0.00'}
+                      {...field}
+                      value={field.value || ''}
+                      onChange={e =>
+                        field.onChange(
+                          e.target.value ? parseFloat(e.target.value) : ''
+                        )
+                      }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-color)]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <FormField
+              control={form.control}
+              name="reason"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Raison (optionnel)</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={3}
+                      placeholder="Ex: Réception de commande, Inventaire, etc."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Enregistrement...
+                  </>
+                ) : (
+                  'Enregistrer'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

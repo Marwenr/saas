@@ -12,52 +12,50 @@ import {
 } from 'recharts';
 
 /**
- * Top Products chart component
+ * Top Products Chart Component
+ * Displays top products as a bar chart
  */
-export default function TopProductsChart({ products, dataKey = 'totalQty' }) {
-  if (!products || products.length === 0) {
-    return (
-      <div className="flex items-center justify-center h-64 text-[var(--text-secondary)]">
-        No data available
-      </div>
-    );
-  }
-
-  // Limit to top 10 for better visualization
-  const chartData = products.slice(0, 10).map(product => ({
-    name: product.name?.substring(0, 20) || 'Unknown',
-    quantity: product.totalQty || 0,
-    revenue: product.totalRevenue || 0,
-  }));
+export default function TopProductsChart({ data, dataKey = 'totalQty' }) {
+  // Use primary color from theme
+  const primaryColor = 'hsl(var(--primary))';
 
   return (
-    <div className="w-full h-96">
+    <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} layout="vertical">
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+        <BarChart
+          data={data}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
-            type="number"
-            stroke="var(--text-secondary)"
-            style={{ fontSize: '12px' }}
+            dataKey="name"
+            stroke="hsl(var(--muted-foreground))"
+            style={{
+              fontSize: '12px',
+            }}
           />
           <YAxis
-            type="category"
-            dataKey="name"
-            stroke="var(--text-secondary)"
-            style={{ fontSize: '12px' }}
-            width={150}
+            stroke="hsl(var(--muted-foreground))"
+            style={{
+              fontSize: '12px',
+            }}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
+              backgroundColor: 'hsl(var(--popover))',
+              border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
             }}
           />
           <Legend />
           <Bar
             dataKey={dataKey === 'totalQty' ? 'quantity' : 'revenue'}
-            fill="#3b82f6"
+            fill={primaryColor}
             name={dataKey === 'totalQty' ? 'Quantity' : 'Revenue'}
           />
         </BarChart>

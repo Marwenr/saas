@@ -3,22 +3,47 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { createSupplier, updateSupplier } from '../lib/suppliers';
-import Input from './Input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { Alert, AlertDescription } from './ui/alert';
+import { ScrollArea } from './ui/scroll-area';
+import { useToast } from './ui/use-toast';
+import { Checkbox } from './ui/checkbox';
 
 /**
  * SupplierForm component - Modal form for creating/editing suppliers
  */
-export default function SupplierForm({ supplier, onClose }) {
+export default function SupplierForm({ supplier, onClose, open = true }) {
   const isEditing = !!supplier;
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const [error, setError] = useState(null);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm({
+  const form = useForm({
     defaultValues: {
       name: '',
       contactName: '',
@@ -36,7 +61,7 @@ export default function SupplierForm({ supplier, onClose }) {
   // Load supplier data if editing
   useEffect(() => {
     if (supplier) {
-      reset({
+      form.reset({
         name: supplier.name || '',
         contactName: supplier.contactName || '',
         email: supplier.email || '',
@@ -49,14 +74,20 @@ export default function SupplierForm({ supplier, onClose }) {
         notes: supplier.notes || '',
       });
     }
-  }, [supplier, reset]);
+  }, [supplier, form]);
+
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+      setError(null);
+    }
+  }, [open, form]);
 
   const onSubmit = async data => {
     setError(null);
-    setLoading(true);
 
     try {
-      // Prepare payload
       const payload = {
         name: data.name.trim(),
         contactName: data.contactName.trim() || undefined,
@@ -70,214 +101,253 @@ export default function SupplierForm({ supplier, onClose }) {
         notes: data.notes.trim() || undefined,
       };
 
-      // Validate required fields
       if (!payload.name) {
         throw new Error('Le nom est obligatoire');
       }
 
       if (isEditing) {
         await updateSupplier(supplier._id || supplier.id, payload);
+        toast({
+          title: 'Supplier updated',
+          description: `Supplier "${payload.name}" has been updated successfully.`,
+        });
       } else {
         await createSupplier(payload);
+        toast({
+          title: 'Supplier created',
+          description: `Supplier "${payload.name}" has been created successfully.`,
+        });
       }
 
       onClose();
     } catch (err) {
       console.error('Failed to save supplier:', err);
       setError(err.message || "Échec de l'enregistrement du fournisseur");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-[var(--bg-primary)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+    <Dialog open={open} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
             {isEditing ? 'Modifier le fournisseur' : 'Ajouter un fournisseur'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            aria-label="Fermer"
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? 'Modifiez les informations du fournisseur'
+              : 'Créez un nouveau fournisseur avec les informations requises'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 overflow-hidden"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6">
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  rules={{ required: 'Le nom est obligatoire' }}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Nom <span className="text-destructive">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nom du fournisseur" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-          {/* Form fields */}
-          <div className="space-y-4">
-            {/* Name - Required */}
-            <div>
-              <Input
-                type="text"
-                id="name"
-                label="Nom"
-                labelSuffix={<span className="text-red-500">*</span>}
-                placeholder="Nom du fournisseur"
-                disabled={loading}
-                {...register('name', {
-                  required: 'Le nom est obligatoire',
-                })}
-              />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="contactName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom du contact</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nom du contact" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Contact Name and Email */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                id="contactName"
-                label="Nom du contact"
-                placeholder="Nom du contact"
-                disabled={loading}
-                {...register('contactName')}
-              />
-              <Input
-                type="email"
-                id="email"
-                label="Email"
-                placeholder="email@example.com"
-                disabled={loading}
-                {...register('email', {
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                })}
-              />
-            </div>
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="email@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            {/* Phone and Tax Number */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="tel"
-                id="phone"
-                label="Téléphone"
-                placeholder="+216 XX XXX XXX"
-                disabled={loading}
-                {...register('phone')}
-              />
-              <Input
-                type="text"
-                id="taxNumber"
-                label="Numéro fiscal"
-                placeholder="Numéro fiscal"
-                disabled={loading}
-                {...register('taxNumber')}
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Téléphone</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="tel"
+                            placeholder="+216 XX XXX XXX"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Address */}
-            <Input
-              type="text"
-              id="address"
-              label="Adresse"
-              placeholder="Adresse"
-              disabled={loading}
-              {...register('address')}
-            />
+                  <FormField
+                    control={form.control}
+                    name="taxNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Numéro fiscal</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Numéro fiscal" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-            {/* City and Country */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                id="city"
-                label="Ville"
-                placeholder="Ville"
-                disabled={loading}
-                {...register('city')}
-              />
-              <Input
-                type="text"
-                id="country"
-                label="Pays"
-                placeholder="TN"
-                disabled={loading}
-                {...register('country')}
-              />
-            </div>
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adresse</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Adresse" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                Notes
-              </label>
-              <textarea
-                {...register('notes')}
-                rows={3}
-                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Notes supplémentaires"
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ville</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ville" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-            {/* Active status */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('isActive')}
-                id="isActive"
-                className="w-4 h-4 text-primary-600 border-[var(--border-color)] rounded focus:ring-primary-500"
-              />
-              <label
-                htmlFor="isActive"
-                className="ml-2 text-sm font-medium text-[var(--text-primary)]"
-              >
-                Fournisseur actif
-              </label>
-            </div>
-          </div>
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pays</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner un pays" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="TN">Tunisie</SelectItem>
+                            <SelectItem value="FR">France</SelectItem>
+                            <SelectItem value="DZ">Algérie</SelectItem>
+                            <SelectItem value="MA">Maroc</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-color)]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? 'Enregistrement...'
-                : isEditing
-                  ? 'Mettre à jour'
-                  : 'Créer'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+                <FormField
+                  control={form.control}
+                  name="notes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Notes</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Notes supplémentaires"
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Fournisseur actif</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </ScrollArea>
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting
+                  ? 'Enregistrement...'
+                  : isEditing
+                    ? 'Mettre à jour'
+                    : 'Créer'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Container from '../../../components/Container';
+
 import AuthGuard from '../../../components/AuthGuard';
 import CustomerForm from '../../../components/CustomerForm';
 import { useAuth } from '../../../lib/useAuth';
@@ -37,21 +37,16 @@ function NewCustomerPage() {
 
   return (
     <div className="py-8">
-      <Container fullWidth>
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
-            Nouveau client
-          </h1>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
+          Nouveau client
+        </h1>
+      </div>
 
-        {/* Customer Form Modal */}
-        {showForm && (
-          <CustomerForm
-            customer={null}
-            onClose={() => handleFormClose(false)}
-          />
-        )}
-      </Container>
+      {/* Customer Form Modal */}
+      {showForm && (
+        <CustomerForm customer={null} onClose={() => handleFormClose(false)} />
+      )}
     </div>
   );
 }

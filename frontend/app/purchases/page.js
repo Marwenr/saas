@@ -3,12 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Container from '../../components/Container';
+
 import AuthGuard from '../../components/AuthGuard';
-import Button from '../../components/Button';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Alert, AlertDescription } from '../../components/ui/alert';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select';
 import { useAuth } from '../../lib/useAuth';
 import { fetchPurchaseOrders } from '../../lib/purchases';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Loader2 } from 'lucide-react';
 
 /**
  * Purchases page - Liste des bons de commande
@@ -24,7 +34,7 @@ function PurchasesPage() {
     total: 0,
     pages: 0,
   });
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -49,7 +59,8 @@ function PurchasesPage() {
       const data = await fetchPurchaseOrders({
         page: pagination.page,
         limit: pagination.limit,
-        status: statusFilter,
+        status:
+          statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
       });
       setPurchaseOrders(data.purchaseOrders || []);
       setPagination(data.pagination || pagination);
@@ -72,35 +83,29 @@ function PurchasesPage() {
     const statusMap = {
       DRAFT: {
         label: 'Brouillon',
-        className:
-          'bg-gray-100 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400',
+        variant: 'secondary',
       },
       PENDING: {
         label: 'En attente',
-        className:
-          'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
+        variant: 'warning',
       },
       PARTIAL: {
         label: 'Partiel',
-        className:
-          'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
+        variant: 'info',
       },
       RECEIVED: {
         label: 'Reçu',
-        className:
-          'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
+        variant: 'success',
       },
       CANCELLED: {
         label: 'Annulé',
-        className:
-          'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
+        variant: 'destructive',
       },
     };
     return (
       statusMap[status] || {
         label: status,
-        className:
-          'bg-gray-100 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400',
+        variant: 'secondary',
       }
     );
   };
@@ -118,152 +123,148 @@ function PurchasesPage() {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container fullWidth>
-        {/* Modern Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
-                Bons de commande
-              </h1>
-              {companyName && (
-                <p className="text-base text-[var(--text-secondary)]">
-                  {companyName}
-                </p>
-              )}
-            </div>
-            <Link
-              href="/purchases/new"
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-purple-600 dark:bg-purple-700 hover:bg-purple-700 dark:hover:bg-purple-600 rounded-xl transition-all shadow-sm hover:shadow-md whitespace-nowrap"
-            >
-              + Nouveau bon de commande
-            </Link>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
+              Bons de commande
+            </h1>
+            {companyName && (
+              <p className="text-base text-muted-foreground">{companyName}</p>
+            )}
           </div>
-
-          {/* Actions and Filters */}
-          <div className="p-6 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md mb-6">
-            <div className="flex gap-4 items-center">
-              <select
-                value={statusFilter}
-                onChange={e => {
-                  setStatusFilter(e.target.value);
-                  setPagination(prev => ({ ...prev, page: 1 }));
-                }}
-                className="px-4 py-2.5 border border-[var(--border-color)] rounded-xl bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-              >
-                <option value="">Tous les statuts</option>
-                <option value="DRAFT">Brouillon</option>
-                <option value="PENDING">En attente</option>
-                <option value="PARTIAL">Partiel</option>
-                <option value="RECEIVED">Reçu</option>
-                <option value="CANCELLED">Annulé</option>
-              </select>
-            </div>
-          </div>
+          <Button asChild>
+            <Link href="/purchases/new">+ Nouveau bon de commande</Link>
+          </Button>
         </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-xl text-red-700 dark:text-red-400 shadow-sm">
-            {error}
-          </div>
-        )}
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[300px]">
+                <SelectValue placeholder="Tous les statuts" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="DRAFT">Brouillon</SelectItem>
+                <SelectItem value="PENDING">En attente</SelectItem>
+                <SelectItem value="PARTIAL">Partiel</SelectItem>
+                <SelectItem value="RECEIVED">Reçu</SelectItem>
+                <SelectItem value="CANCELLED">Annulé</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Purchase orders table */}
-        {loading ? (
-          <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="text-[var(--text-secondary)]">Chargement...</div>
-          </div>
-        ) : purchaseOrders.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <div className="text-[var(--text-secondary)] text-lg">
+      {/* Error message */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Purchase orders table */}
+      {loading ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
+            <div className="text-muted-foreground">Chargement...</div>
+          </CardContent>
+        </Card>
+      ) : purchaseOrders.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <ShoppingCart className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <div className="text-muted-foreground text-lg">
               Aucun bon de commande. Créez votre premier bon de commande !
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md overflow-hidden mb-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10 border-b border-[var(--border-color)]">
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Numéro
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Fournisseur
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Date
-                      </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Montant total
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Statut
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border-color)]">
-                    {purchaseOrders.map(po => {
-                      const status = getStatusBadge(po.status);
-                      return (
-                        <tr
-                          key={po._id || po.id}
-                          className="hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-colors"
-                        >
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)] font-semibold">
-                            {po.orderNumber || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)]">
-                            {po.supplierId?.name || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
-                            {formatDate(po.orderDate)}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)] font-semibold text-right">
-                            {po.totalAmount !== undefined
-                              ? `${po.totalAmount.toFixed(2)} TND`
-                              : '-'}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span
-                              className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold ${status.className}`}
-                            >
-                              {status.label}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <Link
-                              href={`/purchases/${po._id || po.id}`}
-                              className="px-4 py-2 text-sm font-semibold bg-purple-600 dark:bg-purple-700 text-white rounded-xl hover:bg-purple-700 dark:hover:bg-purple-600 transition-all shadow-sm hover:shadow-md inline-block"
-                            >
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      Numéro
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      Fournisseur
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-bold text-foreground uppercase tracking-wide">
+                      Montant total
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-foreground uppercase tracking-wide">
+                      Statut
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-foreground uppercase tracking-wide">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {purchaseOrders.map(po => {
+                    const status = getStatusBadge(po.status);
+                    return (
+                      <tr
+                        key={po._id || po.id}
+                        className="hover:bg-accent/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-foreground font-semibold">
+                          {po.orderNumber || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-foreground">
+                          {po.supplierId?.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-muted-foreground">
+                          {formatDate(po.orderDate)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-foreground font-semibold text-right">
+                          {po.totalAmount !== undefined
+                            ? `${po.totalAmount.toFixed(2)} TND`
+                            : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Badge variant={status.variant}>{status.label}</Badge>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Button asChild variant="outline" size="sm">
+                            <Link href={`/purchases/${po._id || po.id}`}>
                               Voir
                             </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          </Card>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-between p-4 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-                <div className="text-sm font-medium text-[var(--text-secondary)]">
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <Card>
+              <CardContent className="flex items-center justify-between pt-6">
+                <div className="text-sm font-medium text-muted-foreground">
                   Page {pagination.page} sur {pagination.pages} (
                   {pagination.total} bons de commande)
                 </div>
@@ -271,25 +272,25 @@ function PurchasesPage() {
                   <Button
                     onClick={() => handlePageChange(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    variant="secondary"
-                    size="md"
+                    variant="outline"
+                    size="sm"
                   >
                     Précédent
                   </Button>
                   <Button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={pagination.page >= pagination.pages}
-                    variant="secondary"
-                    size="md"
+                    variant="outline"
+                    size="sm"
                   >
                     Suivant
                   </Button>
                 </div>
-              </div>
-            )}
-          </>
-        )}
-      </Container>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
     </div>
   );
 }

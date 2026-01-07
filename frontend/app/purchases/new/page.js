@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Container from '../../../components/Container';
+
 import AuthGuard from '../../../components/AuthGuard';
 import ProductForm from '../../../components/ProductForm';
 import { useAuth } from '../../../lib/useAuth';
@@ -274,381 +274,369 @@ function NewPurchaseOrderPage() {
 
   return (
     <div className="py-8">
-      <Container fullWidth>
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
-            Nouveau bon de commande
-          </h1>
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2">
+          Nouveau bon de commande
+        </h1>
+      </div>
+
+      {/* Error message */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400">
+          {error}
         </div>
+      )}
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          {/* Supplier and dates */}
-          <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
-              Informations générales
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                  Fournisseur <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="supplierId"
-                  value={formData.supplierId}
-                  onChange={handleFormChange}
-                  required
-                  className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="">Sélectionner un fournisseur</option>
-                  {suppliers
-                    .filter(s => s.isActive !== false)
-                    .map(supplier => (
-                      <option
-                        key={supplier._id || supplier.id}
-                        value={supplier._id || supplier.id}
-                      >
-                        {supplier.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                  Statut <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleFormChange}
-                  required
-                  className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  <option value="DRAFT">Brouillon</option>
-                  <option value="PENDING">En attente</option>
-                  <option value="PARTIAL">Partiellement reçu</option>
-                  <option value="RECEIVED">Reçu</option>
-                  <option value="CANCELLED">Annulé</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                  Date de commande
-                </label>
-                <input
-                  type="date"
-                  name="orderDate"
-                  value={formData.orderDate}
-                  onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                  Date de livraison prévue
-                </label>
-                <input
-                  type="date"
-                  name="expectedDate"
-                  value={formData.expectedDate}
-                  onChange={handleFormChange}
-                  className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-            </div>
-            <div className="mt-4">
+      <form onSubmit={handleSubmit}>
+        {/* Supplier and dates */}
+        <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+            Informations générales
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
               <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                Notes
+                Fournisseur <span className="text-red-500">*</span>
               </label>
-              <textarea
-                name="notes"
-                value={formData.notes}
+              <select
+                name="supplierId"
+                value={formData.supplierId}
                 onChange={handleFormChange}
-                rows={2}
+                required
                 className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Notes supplémentaires..."
+              >
+                <option value="">Sélectionner un fournisseur</option>
+                {suppliers
+                  .filter(s => s.isActive !== false)
+                  .map(supplier => (
+                    <option
+                      key={supplier._id || supplier.id}
+                      value={supplier._id || supplier.id}
+                    >
+                      {supplier.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                Statut <span className="text-red-500">*</span>
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleFormChange}
+                required
+                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="DRAFT">Brouillon</option>
+                <option value="PENDING">En attente</option>
+                <option value="PARTIAL">Partiellement reçu</option>
+                <option value="RECEIVED">Reçu</option>
+                <option value="CANCELLED">Annulé</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                Date de commande
+              </label>
+              <input
+                type="date"
+                name="orderDate"
+                value={formData.orderDate}
+                onChange={handleFormChange}
+                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+                Date de livraison prévue
+              </label>
+              <input
+                type="date"
+                name="expectedDate"
+                value={formData.expectedDate}
+                onChange={handleFormChange}
+                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </div>
-
-          {/* Product Search Section */}
-          <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
-            <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
-              Rechercher et ajouter des produits
-            </h2>
-
-            {/* Search Input */}
-            <div className="mb-4">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={e => setSearchInput(e.target.value)}
-                  placeholder="Rechercher par nom, SKU, OEM..."
-                  className="flex-1 px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewProductModal(true)}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
-                >
-                  Ajouter une nouvelle pièce
-                </button>
-              </div>
-            </div>
-
-            {/* Search Results */}
-            {searchLoading && (
-              <div className="text-center py-4 text-[var(--text-secondary)]">
-                Recherche en cours...
-              </div>
-            )}
-
-            {!searchLoading && searchQuery && searchResults.length === 0 && (
-              <div className="text-center py-4 text-[var(--text-secondary)]">
-                Aucun produit trouvé. Cliquez sur &quot;Ajouter une nouvelle
-                pièce&quot; pour créer un nouveau produit.
-              </div>
-            )}
-
-            {!searchLoading && searchResults.length > 0 && (
-              <div className="border border-[var(--border-color)] rounded-lg overflow-hidden">
-                <div className="max-h-64 overflow-y-auto">
-                  <table className="w-full border-collapse">
-                    <thead className="bg-[var(--bg-tertiary)] sticky top-0">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
-                          SKU
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
-                          Nom
-                        </th>
-                        <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
-                          Marque
-                        </th>
-                        <th className="px-4 py-2 text-right text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
-                          Prix d&apos;achat
-                        </th>
-                        <th className="px-4 py-2 text-center text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {searchResults.map(product => (
-                        <tr
-                          key={product._id || product.id}
-                          className="hover:bg-[var(--bg-tertiary)] transition-colors border-b border-[var(--border-color)]"
-                        >
-                          <td className="px-4 py-2 text-sm text-[var(--text-primary)]">
-                            {product.sku || '-'}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-[var(--text-primary)]">
-                            {product.name || '-'}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-[var(--text-secondary)]">
-                            {product.brand?.name || product.brand || '-'}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-[var(--text-primary)] text-right">
-                            {product.purchasePrice !== undefined
-                              ? `${product.purchasePrice.toFixed(2)} TND`
-                              : '-'}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                handleAddProductFromSearch(product)
-                              }
-                              className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
-                            >
-                              Ajouter
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
+              Notes
+            </label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleFormChange}
+              rows={2}
+              className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+              placeholder="Notes supplémentaires..."
+            />
           </div>
+        </div>
 
-          {/* Items */}
-          <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)]">
-                Lignes de commande
-              </h2>
+        {/* Product Search Section */}
+        <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+            Rechercher et ajouter des produits
+          </h2>
+
+          {/* Search Input */}
+          <div className="mb-4">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                placeholder="Rechercher par nom, SKU, OEM..."
+                className="flex-1 px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
               <button
                 type="button"
-                onClick={handleAddItem}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                onClick={() => setShowNewProductModal(true)}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
               >
-                Ajouter une ligne vide
+                Ajouter une nouvelle pièce
               </button>
             </div>
+          </div>
 
-            {items.length === 0 ? (
-              <div className="text-center py-8 text-[var(--text-secondary)]">
-                Aucun produit ajouté. Recherchez et ajoutez des produits
-                ci-dessus.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
+          {/* Search Results */}
+          {searchLoading && (
+            <div className="text-center py-4 text-[var(--text-secondary)]">
+              Recherche en cours...
+            </div>
+          )}
+
+          {!searchLoading && searchQuery && searchResults.length === 0 && (
+            <div className="text-center py-4 text-[var(--text-secondary)]">
+              Aucun produit trouvé. Cliquez sur &quot;Ajouter une nouvelle
+              pièce&quot; pour créer un nouveau produit.
+            </div>
+          )}
+
+          {!searchLoading && searchResults.length > 0 && (
+            <div className="border border-[var(--border-color)] rounded-lg overflow-hidden">
+              <div className="max-h-64 overflow-y-auto">
                 <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b border-[var(--border-color)]">
-                      <th className="px-3 py-2 text-left text-sm font-semibold text-[var(--text-primary)]">
-                        Produit (SKU - Nom)
+                  <thead className="bg-[var(--bg-tertiary)] sticky top-0">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
+                        SKU
                       </th>
-                      <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                        Quantité
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
+                        Nom
                       </th>
-                      <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                        Prix unitaire
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
+                        Marque
                       </th>
-                      <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                        TVA (%)
+                      <th className="px-4 py-2 text-right text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
+                        Prix d&apos;achat
                       </th>
-                      <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                        Total
-                      </th>
-                      <th className="px-3 py-2 text-center text-sm font-semibold text-[var(--text-primary)]">
-                        Actions
+                      <th className="px-4 py-2 text-center text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-color)]">
+                        Action
                       </th>
                     </tr>
                   </thead>
                   <tbody>
-                    {items.map((item, index) => (
+                    {searchResults.map(product => (
                       <tr
-                        key={index}
-                        className="border-b border-[var(--border-color)]"
+                        key={product._id || product.id}
+                        className="hover:bg-[var(--bg-tertiary)] transition-colors border-b border-[var(--border-color)]"
                       >
-                        <td className="px-3 py-2">
-                          {item.productId ? (
-                            <span className="text-[var(--text-primary)]">
-                              {getProductDisplay(item.productId)}
-                            </span>
-                          ) : (
-                            <span className="text-[var(--text-secondary)] italic">
-                              Ligne vide - Recherchez un produit ci-dessus
-                            </span>
-                          )}
+                        <td className="px-4 py-2 text-sm text-[var(--text-primary)]">
+                          {product.sku || '-'}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            type="number"
-                            min="1"
-                            step="1"
-                            value={item.quantity}
-                            onChange={e =>
-                              handleItemChange(
-                                index,
-                                'quantity',
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
-                          />
+                        <td className="px-4 py-2 text-sm text-[var(--text-primary)]">
+                          {product.name || '-'}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={e =>
-                              handleItemChange(
-                                index,
-                                'unitPrice',
-                                e.target.value
-                              )
-                            }
-                            className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
-                          />
+                        <td className="px-4 py-2 text-sm text-[var(--text-secondary)]">
+                          {product.brand?.name || product.brand || '-'}
                         </td>
-                        <td className="px-3 py-2">
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={item.taxRate}
-                            onChange={e =>
-                              handleItemChange(index, 'taxRate', e.target.value)
-                            }
-                            className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
-                          />
+                        <td className="px-4 py-2 text-sm text-[var(--text-primary)] text-right">
+                          {product.purchasePrice !== undefined
+                            ? `${product.purchasePrice.toFixed(2)} TND`
+                            : '-'}
                         </td>
-                        <td className="px-3 py-2 text-right text-[var(--text-primary)] font-medium">
-                          {calculateItemTotal(item).toFixed(2)} TND
-                        </td>
-                        <td className="px-3 py-2 text-center">
+                        <td className="px-4 py-2 text-center">
                           <button
                             type="button"
-                            onClick={() => handleRemoveItem(index)}
-                            className="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                            onClick={() => handleAddProductFromSearch(product)}
+                            className="px-3 py-1 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors"
                           >
-                            Supprimer
+                            Ajouter
                           </button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot>
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="px-3 py-2 text-right font-semibold text-[var(--text-primary)]"
-                      >
-                        Total:
-                      </td>
-                      <td className="px-3 py-2 text-right font-bold text-[var(--text-primary)]">
-                        {calculateTotal().toFixed(2)} TND
-                      </td>
-                      <td></td>
-                    </tr>
-                  </tfoot>
                 </table>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
+        {/* Items */}
+        <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)]">
+              Lignes de commande
+            </h2>
             <button
               type="button"
-              onClick={() => router.push('/purchases')}
-              className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+              onClick={handleAddItem}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
             >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={saving || items.length === 0}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? 'Enregistrement...' : 'Créer le bon de commande'}
+              Ajouter une ligne vide
             </button>
           </div>
-        </form>
 
-        {/* New Product Modal */}
-        {showNewProductModal && (
-          <ProductForm
-            onClose={() => setShowNewProductModal(false)}
-            onCreated={handleProductCreated}
-          />
-        )}
-      </Container>
+          {items.length === 0 ? (
+            <div className="text-center py-8 text-[var(--text-secondary)]">
+              Aucun produit ajouté. Recherchez et ajoutez des produits
+              ci-dessus.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-[var(--border-color)]">
+                    <th className="px-3 py-2 text-left text-sm font-semibold text-[var(--text-primary)]">
+                      Produit (SKU - Nom)
+                    </th>
+                    <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
+                      Quantité
+                    </th>
+                    <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
+                      Prix unitaire
+                    </th>
+                    <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
+                      TVA (%)
+                    </th>
+                    <th className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
+                      Total
+                    </th>
+                    <th className="px-3 py-2 text-center text-sm font-semibold text-[var(--text-primary)]">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((item, index) => (
+                    <tr
+                      key={index}
+                      className="border-b border-[var(--border-color)]"
+                    >
+                      <td className="px-3 py-2">
+                        {item.productId ? (
+                          <span className="text-[var(--text-primary)]">
+                            {getProductDisplay(item.productId)}
+                          </span>
+                        ) : (
+                          <span className="text-[var(--text-secondary)] italic">
+                            Ligne vide - Recherchez un produit ci-dessus
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="1"
+                          step="1"
+                          value={item.quantity}
+                          onChange={e =>
+                            handleItemChange(index, 'quantity', e.target.value)
+                          }
+                          className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.unitPrice}
+                          onChange={e =>
+                            handleItemChange(index, 'unitPrice', e.target.value)
+                          }
+                          className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          value={item.taxRate}
+                          onChange={e =>
+                            handleItemChange(index, 'taxRate', e.target.value)
+                          }
+                          className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
+                        />
+                      </td>
+                      <td className="px-3 py-2 text-right text-[var(--text-primary)] font-medium">
+                        {calculateItemTotal(item).toFixed(2)} TND
+                      </td>
+                      <td className="px-3 py-2 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveItem(index)}
+                          className="px-2 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                        >
+                          Supprimer
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td
+                      colSpan="4"
+                      className="px-3 py-2 text-right font-semibold text-[var(--text-primary)]"
+                    >
+                      Total:
+                    </td>
+                    <td className="px-3 py-2 text-right font-bold text-[var(--text-primary)]">
+                      {calculateTotal().toFixed(2)} TND
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => router.push('/purchases')}
+            className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={saving || items.length === 0}
+            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {saving ? 'Enregistrement...' : 'Créer le bon de commande'}
+          </button>
+        </div>
+      </form>
+
+      {/* New Product Modal */}
+      {showNewProductModal && (
+        <ProductForm
+          onClose={() => setShowNewProductModal(false)}
+          onCreated={handleProductCreated}
+        />
+      )}
     </div>
   );
 }

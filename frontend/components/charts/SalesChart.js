@@ -3,6 +3,8 @@
 import {
   LineChart,
   Line,
+  AreaChart,
+  Area,
   BarChart,
   Bar,
   XAxis,
@@ -14,44 +16,46 @@ import {
 } from 'recharts';
 
 /**
- * Sales comparison chart component
+ * Sales Chart Component
+ * Displays sales data as a line or area chart
  */
-export default function SalesChart({
-  currentData,
-  previousData,
-  type = 'line',
-}) {
-  // Prepare data for chart (assuming we have daily/weekly/monthly breakdown)
-  // For now, we'll show a simple comparison bar chart
-  const chartData = [
-    {
-      name: 'Current',
-      value: currentData || 0,
-    },
-    {
-      name: 'Previous',
-      value: previousData || 0,
-    },
-  ];
+export default function SalesChart({ data, type = 'line', dataKey = 'value' }) {
+  const ChartComponent = type === 'area' ? AreaChart : LineChart;
+  const DataComponent = type === 'area' ? Area : Line;
 
-  const ChartComponent = type === 'bar' ? BarChart : LineChart;
-  const DataComponent = type === 'bar' ? Bar : Line;
+  // Use primary color from theme
+  const primaryColor = 'hsl(var(--primary))';
 
   return (
-    <div className="w-full h-64">
+    <div className="w-full h-full">
       <ResponsiveContainer width="100%" height="100%">
-        <ChartComponent data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+        <ChartComponent
+          data={data}
+          margin={{
+            top: 5,
+            right: 30,
+            left: 20,
+            bottom: 5,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis
             dataKey="name"
-            stroke="var(--text-secondary)"
-            style={{ fontSize: '12px' }}
+            stroke="hsl(var(--muted-foreground))"
+            style={{
+              fontSize: '12px',
+            }}
           />
-          <YAxis stroke="var(--text-secondary)" style={{ fontSize: '12px' }} />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            style={{
+              fontSize: '12px',
+            }}
+          />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
+              backgroundColor: 'hsl(var(--popover))',
+              border: '1px solid hsl(var(--border))',
               borderRadius: '8px',
             }}
           />
@@ -59,8 +63,8 @@ export default function SalesChart({
           <DataComponent
             type="monotone"
             dataKey="value"
-            stroke="#3b82f6"
-            fill="#3b82f6"
+            stroke={primaryColor}
+            fill={primaryColor}
             name="Sales"
           />
         </ChartComponent>

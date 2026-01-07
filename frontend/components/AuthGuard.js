@@ -1,36 +1,46 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../lib/useAuth';
+import { Loader2 } from 'lucide-react';
 
 /**
- * AuthGuard component - redirects to login if not authenticated
+ * AuthGuard Component
+ * Protects routes that require authentication
+ * Redirects unauthenticated users to login
  */
 export default function AuthGuard({ children }) {
-  const { loading, isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login', '/register', '/'];
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && !isAuthenticated && !publicRoutes.includes(pathname)) {
       router.push('/login');
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, pathname, router]);
 
-  // Show nothing while checking auth
+  // Show loading state while checking auth
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
       </div>
     );
   }
 
   // Show nothing if not authenticated (redirect will happen)
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !publicRoutes.includes(pathname)) {
     return null;
   }
 
-  // Show children if authenticated
+  // Render children if authenticated or on public route
   return <>{children}</>;
 }

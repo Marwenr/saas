@@ -1,51 +1,85 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { createProduct, updateProduct } from '../lib/products';
 import { fetchBrands, createBrand } from '../lib/brands';
-import Input from './Input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from './ui/dialog';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from './ui/form';
+import { Alert, AlertDescription } from './ui/alert';
+import { ScrollArea } from './ui/scroll-area';
+import { useToast } from './ui/use-toast';
+import { Checkbox } from './ui/checkbox';
 
 /**
  * ProductForm component - Modal form for creating/editing products
- * @param {Object} product - Product to edit (optional, if not provided, creates new product)
- * @param {Function} onClose - Callback when modal is closed
- * @param {Function} onCreated - Optional callback when product is created, receives the created product
  */
-export default function ProductForm({ product, onClose, onCreated }) {
+export default function ProductForm({
+  product,
+  onClose,
+  onCreated,
+  open = true,
+}) {
   const isEditing = !!product;
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
   const [error, setError] = useState(null);
   const [brandSuggestions, setBrandSuggestions] = useState([]);
   const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
   const [brandSearchTerm, setBrandSearchTerm] = useState('');
   const brandInputRef = useRef(null);
   const suggestionsRef = useRef(null);
-  const [formData, setFormData] = useState({
-    sku: '',
-    name: '',
-    brand: '',
-    brandId: null,
-    manufacturerRef: '',
-    category: '',
-    salePrice: '',
-    description: '',
-    oemRefs: '',
-    purchasePrice: '',
-    taxRate: '19.00',
-    marginRate: '20.00',
-    isActive: true,
+
+  const form = useForm({
+    defaultValues: {
+      sku: '',
+      name: '',
+      brand: '',
+      brandId: null,
+      manufacturerRef: '',
+      category: '',
+      salePrice: '',
+      description: '',
+      oemRefs: '',
+      purchasePrice: '',
+      taxRate: '19.00',
+      marginRate: '20.00',
+      isActive: true,
+    },
   });
+
+  const purchasePrice = form.watch('purchasePrice');
+  const marginRate = form.watch('marginRate');
+  const taxRate = form.watch('taxRate');
+  const brand = form.watch('brand');
 
   // Load product data if editing
   useEffect(() => {
     if (product) {
-      // Convert oemRefs array to comma-separated string for display
       const oemRefsString =
         product.oemRefs && Array.isArray(product.oemRefs)
           ? product.oemRefs.filter(ref => ref && ref.trim()).join(', ')
           : '';
 
-      setFormData({
+      form.reset({
         sku: product.sku || '',
         name: product.name || '',
         brand: product.brand?.name || product.brand || '',
@@ -73,9 +107,20 @@ export default function ProductForm({ product, onClose, onCreated }) {
         isActive: product.isActive !== undefined ? product.isActive : true,
       });
     }
-  }, [product]);
+  }, [product, form]);
 
-  // Fetch brand suggestions when search term changes
+  // Reset form when modal closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+      setError(null);
+      setBrandSuggestions([]);
+      setShowBrandSuggestions(false);
+      setBrandSearchTerm('');
+    }
+  }, [open, form]);
+
+  // Fetch brand suggestions
   useEffect(() => {
     const searchBrands = async () => {
       if (brandSearchTerm.trim().length > 0) {
@@ -97,84 +142,33 @@ export default function ProductForm({ product, onClose, onCreated }) {
     return () => clearTimeout(debounceTimer);
   }, [brandSearchTerm]);
 
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = event => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(event.target) &&
-        brandInputRef.current &&
-        !brandInputRef.current.contains(event.target)
-      ) {
-        setShowBrandSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   // Auto-calculate salePrice
-  // Calculation:
-  // priceHT = purchasePrice * (1 + marginRate / 100) - price HT with gain
-  // priceTTC = priceHT * (1 + taxRate / 100) - final price with tax
   useEffect(() => {
-    const purchasePrice = parseFloat(formData.purchasePrice) || 0;
-    const marginRate = parseFloat(formData.marginRate) || 0;
-    const taxRate = parseFloat(formData.taxRate) || 19; // Default to 19% if not set
+    const purchase = parseFloat(purchasePrice) || 0;
+    const margin = parseFloat(marginRate) || 0;
+    const tax = parseFloat(taxRate) || 19;
 
-    // Only auto-calculate if purchasePrice is provided and valid
-    if (purchasePrice > 0 && !isNaN(purchasePrice)) {
-      // Calculate price HT with gain (marginRate)
+    if (purchase > 0 && !isNaN(purchase)) {
       const priceHT =
-        purchasePrice > 0 && marginRate > 0
-          ? purchasePrice * (1 + marginRate / 100)
-          : purchasePrice;
-
-      // Add tax (taxRate)
-      const priceTTC = priceHT > 0 ? priceHT * (1 + taxRate / 100) : 0;
+        purchase > 0 && margin > 0 ? purchase * (1 + margin / 100) : purchase;
+      const priceTTC = priceHT > 0 ? priceHT * (1 + tax / 100) : 0;
 
       if (priceTTC > 0) {
-        setFormData(prev => ({
-          ...prev,
-          salePrice: priceTTC.toFixed(2),
-        }));
+        form.setValue('salePrice', priceTTC.toFixed(2), { shouldDirty: false });
       }
-    } else if (purchasePrice === 0 || formData.purchasePrice === '') {
-      // If purchasePrice is cleared, keep salePrice as is (user can still edit manually)
-      // Don't reset it to empty
     }
-  }, [formData.purchasePrice, formData.marginRate, formData.taxRate]);
+  }, [purchasePrice, marginRate, taxRate, form]);
 
-  const handleChange = e => {
-    const { name, value, type, checked } = e.target;
-
-    // Special handling for brand input
-    if (name === 'brand') {
-      setBrandSearchTerm(value);
-      setFormData(prev => ({
-        ...prev,
-        brand: value,
-        brandId: null, // Reset brandId when user types
-      }));
-      return;
-    }
-
-    // If user manually changes salePrice, don't auto-calculate
-    // Otherwise, let the useEffect handle the calculation
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+  const handleBrandChange = value => {
+    setBrandSearchTerm(value);
+    form.setValue('brand', value);
+    form.setValue('brandId', null);
   };
 
-  const handleBrandSelect = brand => {
-    setFormData(prev => ({
-      ...prev,
-      brand: brand.name,
-      brandId: brand._id,
-    }));
-    setBrandSearchTerm(brand.name);
+  const handleBrandSelect = selectedBrand => {
+    form.setValue('brand', selectedBrand.name);
+    form.setValue('brandId', selectedBrand._id);
+    setBrandSearchTerm(selectedBrand.name);
     setShowBrandSuggestions(false);
   };
 
@@ -185,41 +179,39 @@ export default function ProductForm({ product, onClose, onCreated }) {
       const response = await createBrand({ name: brandSearchTerm.trim() });
       const newBrand = response.brand;
       handleBrandSelect(newBrand);
+      toast({
+        title: 'Brand created',
+        description: `Brand "${newBrand.name}" has been created.`,
+      });
     } catch (err) {
       console.error('Failed to create brand:', err);
       setError(err.message || 'Échec de la création de la marque');
     }
   };
 
-  const handleSubmit = async e => {
-    e.preventDefault();
+  const onSubmit = async data => {
     setError(null);
-    setLoading(true);
 
     try {
-      // Prepare payload
-      // Use brandId if available, otherwise use brand name (for backward compatibility or new creation)
-      const brandPayload =
-        formData.brandId || formData.brand.trim() || undefined;
+      const brandPayload = data.brandId || data.brand.trim() || undefined;
 
       const payload = {
-        sku: formData.sku.trim(),
-        name: formData.name.trim(),
+        sku: data.sku.trim(),
+        name: data.name.trim(),
         brand: brandPayload,
-        manufacturerRef: formData.manufacturerRef.trim() || undefined,
-        category: formData.category.trim() || undefined,
-        salePrice: parseFloat(formData.salePrice),
-        description: formData.description.trim() || undefined,
-        oemRefs: formData.oemRefs.trim() || undefined, // Backend will normalize to array
-        purchasePrice: formData.purchasePrice
-          ? parseFloat(formData.purchasePrice)
+        manufacturerRef: data.manufacturerRef.trim() || undefined,
+        category: data.category.trim() || undefined,
+        salePrice: parseFloat(data.salePrice),
+        description: data.description.trim() || undefined,
+        oemRefs: data.oemRefs.trim() || undefined,
+        purchasePrice: data.purchasePrice
+          ? parseFloat(data.purchasePrice)
           : undefined,
-        taxRate: formData.taxRate ? parseFloat(formData.taxRate) : 19,
-        marginRate: formData.marginRate ? parseFloat(formData.marginRate) : 20,
-        isActive: formData.isActive,
+        taxRate: data.taxRate ? parseFloat(data.taxRate) : 19,
+        marginRate: data.marginRate ? parseFloat(data.marginRate) : 20,
+        isActive: data.isActive,
       };
 
-      // Validate required fields
       if (
         !payload.sku ||
         !payload.name ||
@@ -229,13 +221,20 @@ export default function ProductForm({ product, onClose, onCreated }) {
         throw new Error('SKU, nom et prix de vente sont obligatoires');
       }
 
+      let result;
       if (isEditing) {
         await updateProduct(product._id || product.id, payload);
+        toast({
+          title: 'Product updated',
+          description: `Product "${payload.name}" has been updated successfully.`,
+        });
       } else {
-        const response = await createProduct(payload);
-        // Extract product from response (could be { product } or just the product object)
-        const createdProduct = response.product || response;
-        // Call onCreated callback if provided
+        result = await createProduct(payload);
+        const createdProduct = result.product || result;
+        toast({
+          title: 'Product created',
+          description: `Product "${createdProduct.name}" has been created successfully.`,
+        });
         if (onCreated) {
           onCreated(createdProduct);
         }
@@ -245,297 +244,339 @@ export default function ProductForm({ product, onClose, onCreated }) {
     } catch (err) {
       console.error('Failed to save product:', err);
       setError(err.message || "Échec de l'enregistrement du produit");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="bg-[var(--bg-primary)] rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
-          <h2 className="text-2xl font-bold text-[var(--text-primary)]">
+    <Dialog open={open} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle>
             {isEditing ? 'Modifier la pièce' : 'Ajouter une pièce'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-            aria-label="Fermer"
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? 'Modifiez les informations du produit'
+              : 'Créez un nouveau produit avec les informations requises'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 overflow-hidden"
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Form fields */}
-          <div className="space-y-4">
-            {/* SKU and Name - Required */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                type="text"
-                id="sku"
-                name="sku"
-                label="SKU"
-                labelSuffix={<span className="text-red-500">*</span>}
-                value={formData.sku}
-                onChange={handleChange}
-                placeholder="SKU-001"
-                required
-                disabled={loading}
-              />
-              <Input
-                type="text"
-                id="name"
-                name="name"
-                label="Nom"
-                labelSuffix={<span className="text-red-500">*</span>}
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Nom du produit"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            {/* Brand and Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="relative" ref={brandInputRef}>
-                <Input
-                  type="text"
-                  id="brand"
-                  name="brand"
-                  label="Marque"
-                  value={formData.brand}
-                  onChange={handleChange}
-                  placeholder="Rechercher ou ajouter une marque"
-                  disabled={loading}
-                  autoComplete="off"
-                />
-                {showBrandSuggestions && brandSuggestions.length > 0 && (
-                  <div
-                    ref={suggestionsRef}
-                    className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg max-h-60 overflow-y-auto"
-                  >
-                    {brandSuggestions.map(brand => (
-                      <button
-                        key={brand._id}
-                        type="button"
-                        onClick={() => handleBrandSelect(brand)}
-                        className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors"
-                      >
-                        {brand.name}
-                      </button>
-                    ))}
-                  </div>
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-                {showBrandSuggestions &&
-                  brandSearchTerm.trim() &&
-                  brandSuggestions.length === 0 && (
-                    <div
-                      ref={suggestionsRef}
-                      className="absolute z-50 w-full mt-1 bg-[var(--bg-primary)] border border-[var(--border-color)] rounded-lg shadow-lg"
-                    >
-                      <button
-                        type="button"
-                        onClick={handleBrandCreate}
-                        className="w-full text-left px-4 py-2 hover:bg-[var(--bg-secondary)] text-[var(--text-primary)] transition-colors flex items-center gap-2"
-                      >
-                        <span>+</span>
-                        <span>
-                          Ajouter &quot;{brandSearchTerm.trim()}&quot;
-                        </span>
-                      </button>
-                    </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="sku"
+                    rules={{ required: 'SKU is required' }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          SKU <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="SKU-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    rules={{ required: 'Name is required' }}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Nom <span className="text-destructive">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="Nom du produit" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="brand"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Marque</FormLabel>
+                        <FormControl>
+                          <div className="relative" ref={brandInputRef}>
+                            <Input
+                              placeholder="Rechercher ou ajouter une marque"
+                              {...field}
+                              value={brand}
+                              onChange={e => handleBrandChange(e.target.value)}
+                              autoComplete="off"
+                            />
+                            {showBrandSuggestions &&
+                              brandSuggestions.length > 0 && (
+                                <div
+                                  ref={suggestionsRef}
+                                  className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                >
+                                  {brandSuggestions.map(brandItem => (
+                                    <button
+                                      key={brandItem._id}
+                                      type="button"
+                                      onClick={() =>
+                                        handleBrandSelect(brandItem)
+                                      }
+                                      className="w-full text-left px-4 py-2 hover:bg-accent text-foreground transition-colors"
+                                    >
+                                      {brandItem.name}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            {showBrandSuggestions &&
+                              brandSearchTerm.trim() &&
+                              brandSuggestions.length === 0 && (
+                                <div
+                                  ref={suggestionsRef}
+                                  className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={handleBrandCreate}
+                                    className="w-full text-left px-4 py-2 hover:bg-accent text-foreground transition-colors flex items-center gap-2"
+                                  >
+                                    <span>+</span>
+                                    <span>
+                                      Ajouter &quot;{brandSearchTerm.trim()}
+                                      &quot;
+                                    </span>
+                                  </button>
+                                </div>
+                              )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Catégorie</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: Freinage" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="manufacturerRef"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Référence fabricant</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Ex: Valeo 123456" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="oemRefs"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Références OEM</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Séparées par des virgules, ex: REF1, REF2"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Séparez plusieurs références par des virgules
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description du produit"
+                          rows={3}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="purchasePrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prix d'achat (HT) (TND)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="marginRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Taux de gain (%){' '}
+                            <span className="text-xs text-muted-foreground">
+                              (marginRate)
+                            </span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="20"
+                              min="0"
+                              step="0.01"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="salePrice"
+                      rules={{
+                        required: 'Sale price is required',
+                        min: { value: 0, message: 'Must be >= 0' },
+                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Prix de vente (TTC) (TND){' '}
+                            <span className="text-destructive">*</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            (calculé automatiquement avec TVA)
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Taux de TVA (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="0"
+                              min="0"
+                              max="100"
+                              step="0.01"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="isActive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Produit actif</FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
               </div>
-              <Input
-                type="text"
-                id="category"
-                name="category"
-                label="Catégorie"
-                value={formData.category}
-                onChange={handleChange}
-                placeholder="Ex: Freinage"
-                disabled={loading}
-              />
-            </div>
+            </ScrollArea>
 
-            {/* Manufacturer Reference */}
-            <Input
-              type="text"
-              id="manufacturerRef"
-              name="manufacturerRef"
-              label="Référence fabricant"
-              value={formData.manufacturerRef}
-              onChange={handleChange}
-              placeholder="Ex: Valeo 123456, Bosch 0 123 456 789"
-              disabled={loading}
-            />
-
-            {/* OEM References */}
-            <div>
-              <Input
-                type="text"
-                id="oemRefs"
-                name="oemRefs"
-                label="Références OEM"
-                value={formData.oemRefs}
-                onChange={handleChange}
-                placeholder="Séparées par des virgules, ex: REF1, REF2, REF3"
-                disabled={loading}
-              />
-              <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                Séparez plusieurs références par des virgules
-              </p>
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={3}
-                className="w-full px-3 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                placeholder="Description du produit"
-              />
-            </div>
-
-            {/* Prices */}
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  type="number"
-                  id="purchasePrice"
-                  name="purchasePrice"
-                  label="Prix d'achat (HT) (TND)"
-                  value={formData.purchasePrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  min="0"
-                  step="0.01"
-                  disabled={loading}
-                />
-                <Input
-                  type="number"
-                  id="marginRate"
-                  name="marginRate"
-                  label="Taux de gain (%)"
-                  labelSuffix={
-                    <span className="text-gray-500 text-xs">(marginRate)</span>
-                  }
-                  value={formData.marginRate}
-                  onChange={handleChange}
-                  placeholder="20"
-                  min="0"
-                  step="0.01"
-                  disabled={loading}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Input
-                  type="number"
-                  id="salePrice"
-                  name="salePrice"
-                  label="Prix de vente (TTC) (TND)"
-                  labelSuffix={
-                    <>
-                      <span className="text-red-500">*</span>{' '}
-                      <span className="text-gray-500 text-xs ml-2">
-                        (calculé automatiquement avec TVA)
-                      </span>
-                    </>
-                  }
-                  value={formData.salePrice}
-                  onChange={handleChange}
-                  placeholder="0.00"
-                  required
-                  min="0"
-                  step="0.01"
-                  disabled={loading}
-                />
-                <Input
-                  type="number"
-                  id="taxRate"
-                  name="taxRate"
-                  label="Taux de TVA (%)"
-                  value={formData.taxRate}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            {/* Active status */}
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                id="isActive"
-                className="w-4 h-4 text-primary-600 border-[var(--border-color)] rounded focus:ring-primary-500"
-              />
-              <label
-                htmlFor="isActive"
-                className="ml-2 text-sm font-medium text-[var(--text-primary)]"
-              >
-                Produit actif
-              </label>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-[var(--border-color)]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-            >
-              Annuler
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading
-                ? 'Enregistrement...'
-                : isEditing
-                  ? 'Mettre à jour'
-                  : 'Créer'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Annuler
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting
+                  ? 'Enregistrement...'
+                  : isEditing
+                    ? 'Mettre à jour'
+                    : 'Créer'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

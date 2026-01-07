@@ -2,6 +2,7 @@
 
 import { AuthProvider } from '../lib/useAuth';
 import { SidebarProvider } from '../lib/useSidebar';
+import { Toaster } from './ui/toaster';
 
 /**
  * Client-side providers wrapper
@@ -10,7 +11,10 @@ import { SidebarProvider } from '../lib/useSidebar';
 export function Providers({ children }) {
   return (
     <AuthProvider>
-      <SidebarProvider>{children}</SidebarProvider>
+      <SidebarProvider>
+        {children}
+        <Toaster />
+      </SidebarProvider>
     </AuthProvider>
   );
 }

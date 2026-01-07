@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Container from '../../components/Container';
 import AuthGuard from '../../components/AuthGuard';
 import StockAdjustmentForm from '../../components/StockAdjustmentForm';
-import Button from '../../components/Button';
+import { Button } from '../../components/ui/button';
+import { Card, CardContent } from '../../components/ui/card';
+import { Badge } from '../../components/ui/badge';
+import { Alert, AlertDescription } from '../../components/ui/alert';
 import { useAuth } from '../../lib/useAuth';
 import { fetchProducts } from '../../lib/products';
 import { fetchLowStockProducts } from '../../lib/inventory';
-import { Package } from 'lucide-react';
+import { Package, Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
 /**
  * Inventory page - Stock management
@@ -109,164 +112,176 @@ function InventoryPage() {
     if (stockQty <= minStock) {
       return {
         label: 'Stock faible',
-        className:
-          'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
+        variant: 'warning',
       };
     }
     return {
       label: 'OK',
-      className:
-        'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
+      variant: 'success',
     };
   };
 
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="py-8 min-h-screen bg-gradient-to-br from-purple-50/50 via-white to-purple-50/30 dark:from-[var(--bg-primary)] dark:via-[var(--bg-primary)] dark:to-[var(--bg-primary)]">
-      <Container fullWidth>
-        {/* Modern Header */}
-        <div className="mb-8">
-          <div className="mb-6">
-            <h1 className="text-4xl font-bold text-[var(--text-primary)] mb-2 tracking-tight">
-              Inventaire
-            </h1>
-            {companyName && (
-              <p className="text-base text-[var(--text-secondary)]">
-                {companyName}
-              </p>
-            )}
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="mb-6">
+          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
+            Inventaire
+          </h1>
+          {companyName && (
+            <p className="text-base text-muted-foreground">{companyName}</p>
+          )}
+        </div>
 
-          {/* Low stock toggle */}
-          <div className="p-6 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md mb-6">
+        {/* Low stock toggle */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={lowStockOnly}
                 onChange={handleLowStockToggle}
-                className="w-5 h-5 text-purple-600 border-[var(--border-color)] rounded focus:ring-purple-500 focus:ring-2"
+                className="w-5 h-5 text-primary border-border rounded focus:ring-primary focus:ring-2"
               />
-              <span className="text-sm font-semibold text-[var(--text-primary)]">
+              <span className="text-sm font-semibold text-foreground">
                 Afficher uniquement les produits en stock faible
               </span>
             </label>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+      </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-xl text-red-700 dark:text-red-400 shadow-sm">
-            {error}
-          </div>
-        )}
+      {/* Error message */}
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-        {/* Products table */}
-        {loading ? (
-          <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <div className="text-[var(--text-secondary)]">Chargement...</div>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-            <Package className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <div className="text-[var(--text-secondary)] text-lg">
+      {/* Products table */}
+      {loading ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-2" />
+            <div className="text-muted-foreground">Chargement...</div>
+          </CardContent>
+        </Card>
+      ) : products.length === 0 ? (
+        <Card>
+          <CardContent className="py-16 text-center">
+            <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <div className="text-muted-foreground text-lg">
               {lowStockOnly
                 ? 'Aucun produit en stock faible'
                 : 'Aucun produit. Ajoutez des produits dans le catalogue !'}
             </div>
-          </div>
-        ) : (
-          <>
-            <div className="bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md overflow-hidden mb-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-purple-50/50 to-transparent dark:from-purple-900/10 border-b border-[var(--border-color)]">
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        SKU
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Nom
-                      </th>
-                      <th className="px-6 py-4 text-left text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Marque
-                      </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Stock actuel
-                      </th>
-                      <th className="px-6 py-4 text-right text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Stock minimum
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Statut
-                      </th>
-                      <th className="px-6 py-4 text-center text-sm font-bold text-[var(--text-primary)] uppercase tracking-wide">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border-color)]">
-                    {products.map(product => {
-                      const stockQty =
-                        product.stockQty !== undefined ? product.stockQty : 0;
-                      const minStock =
-                        product.minStock !== undefined ? product.minStock : 0;
-                      const status = getStockStatus(product);
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 border-b border-border">
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      SKU
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      Nom
+                    </th>
+                    <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
+                      Marque
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-bold text-foreground uppercase tracking-wide">
+                      Stock actuel
+                    </th>
+                    <th className="px-6 py-4 text-right text-sm font-bold text-foreground uppercase tracking-wide">
+                      Stock minimum
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-foreground uppercase tracking-wide">
+                      Statut
+                    </th>
+                    <th className="px-6 py-4 text-center text-sm font-bold text-foreground uppercase tracking-wide">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {products.map(product => {
+                    const stockQty =
+                      product.stockQty !== undefined ? product.stockQty : 0;
+                    const minStock =
+                      product.minStock !== undefined ? product.minStock : 0;
+                    const status = getStockStatus(product);
 
-                      return (
-                        <tr
-                          key={product._id || product.id}
-                          className="hover:bg-purple-50/30 dark:hover:bg-purple-900/10 transition-colors"
-                        >
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)] font-medium">
-                            {product.sku || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)]">
-                            {product.name || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
-                            {product.brand?.name || product.brand || '-'}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-primary)] font-semibold text-right">
-                            {stockQty}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary)] text-right">
-                            {minStock}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <span
-                              className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold ${status.className}`}
-                            >
-                              {status.label}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            <Button
-                              onClick={() => handleAdjustStock(product)}
-                              variant="primary"
-                              size="sm"
-                            >
-                              Ajuster stock
-                            </Button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                    return (
+                      <tr
+                        key={product._id || product.id}
+                        className="hover:bg-accent/50 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-sm text-foreground font-medium">
+                          {product.sku || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-foreground">
+                          {product.name || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-muted-foreground">
+                          {product.brand?.name || product.brand || '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-foreground font-semibold text-right">
+                          {stockQty}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-muted-foreground text-right">
+                          {minStock}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Badge
+                            variant={
+                              status.variant === 'warning'
+                                ? 'outline'
+                                : 'outline'
+                            }
+                            className={cn(
+                              status.variant === 'warning'
+                                ? 'bg-warning/10 text-warning border-warning/20'
+                                : 'bg-success/10 text-success border-success/20'
+                            )}
+                          >
+                            {status.label}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <Button
+                            onClick={() => handleAdjustStock(product)}
+                            variant="default"
+                            size="sm"
+                          >
+                            Ajuster stock
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
+          </Card>
 
-            {/* Pagination */}
-            {pagination.pages > 1 && (
-              <div className="flex items-center justify-between p-4 bg-white dark:bg-[var(--bg-secondary)] rounded-xl border border-[var(--border-color)] shadow-md">
-                <div className="text-sm font-medium text-[var(--text-secondary)]">
+          {/* Pagination */}
+          {pagination.pages > 1 && (
+            <Card>
+              <CardContent className="flex items-center justify-between pt-6">
+                <div className="text-sm font-medium text-muted-foreground">
                   Page {pagination.page} sur {pagination.pages} (
                   {pagination.total} produits)
                 </div>
@@ -274,34 +289,34 @@ function InventoryPage() {
                   <Button
                     onClick={() => handlePageChange(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    variant="secondary"
-                    size="md"
+                    variant="outline"
+                    size="sm"
                   >
                     Précédent
                   </Button>
                   <Button
                     onClick={() => handlePageChange(pagination.page + 1)}
                     disabled={pagination.page >= pagination.pages}
-                    variant="secondary"
-                    size="md"
+                    variant="outline"
+                    size="sm"
                   >
                     Suivant
                   </Button>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
 
-        {/* Stock Adjustment Form Modal */}
-        {showAdjustmentForm && selectedProduct && (
-          <StockAdjustmentForm
-            product={selectedProduct}
-            onClose={handleAdjustmentClose}
-            onSuccess={handleAdjustmentSuccess}
-          />
-        )}
-      </Container>
+      {/* Stock Adjustment Form Modal */}
+      {showAdjustmentForm && selectedProduct && (
+        <StockAdjustmentForm
+          product={selectedProduct}
+          onClose={handleAdjustmentClose}
+          onSuccess={handleAdjustmentSuccess}
+        />
+      )}
     </div>
   );
 }

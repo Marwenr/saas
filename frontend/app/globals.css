@@ -2,61 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Light/Dark theme CSS variables */
-:root {
-  /* Light theme colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #fafafa;
-  --bg-tertiary: #f5f5f5;
-  --text-primary: #171717;
-  --text-secondary: #525252;
-  --text-tertiary: #737373;
-  --border-color: #e5e5e5;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
+/* shadcn/ui CSS Variables - Professional ERP Color System */
+@layer base {
+  :root {
+    /* Background Colors */
+    --background: 210 20% 98%; /* #F8FAFC - App background - RGB(248, 250, 252) */
+    --foreground: 222 47% 11%; /* #0F172A - Primary text - RGB(15, 23, 42) */
+    
+    /* Card Colors */
+    --card: 0 0% 100%; /* #FFFFFF - Card/Table background */
+    --card-foreground: 222 47% 11%; /* #0F172A - Card text - RGB(15, 23, 42) */
+    
+    /* Popover Colors */
+    --popover: 0 0% 100%; /* #FFFFFF */
+    --popover-foreground: 222 47% 11%; /* #0F172A - RGB(15, 23, 42) */
+    
+    /* Primary Colors - Blue ONLY */
+    --primary: 217 91% 60%; /* #2563EB - Primary action color (BLUE ONLY) - RGB(37, 99, 235) */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF - Primary text */
+    
+    /* Secondary Colors */
+    --secondary: 210 40% 96%; /* #F1F5F9 - Hover background - RGB(241, 245, 249) */
+    --secondary-foreground: 222 47% 11%; /* #0F172A - RGB(15, 23, 42) */
+    
+    /* Muted Colors */
+    --muted: 210 40% 96%; /* #F1F5F9 - Muted background - RGB(241, 245, 249) */
+    --muted-foreground: 215 20% 65%; /* #64748B - Muted text - RGB(100, 116, 139) */
+    
+    /* Accent Colors */
+    --accent: 210 40% 96%; /* #F1F5F9 - Accent background - RGB(241, 245, 249) */
+    --accent-foreground: 222 47% 11%; /* #0F172A - RGB(15, 23, 42) */
+    
+    /* Destructive (Error) Colors */
+    --destructive: 0 84% 60%; /* #DC2626 - Error color */
+    --destructive-foreground: 255 255 255; /* #FFFFFF */
+    
+    /* Border & Input Colors - SUBTLE and LIGHT */
+    --border: 214 32% 91%; /* #E2E8F0 - Subtle light border - RGB(226, 232, 240) */
+    --input: 214 32% 91%; /* #E2E8F0 - Subtle light input border - RGB(226, 232, 240) */
+    --ring: 217 91% 60%; /* #2563EB - Primary focus ring - RGB(37, 99, 235) */
+    
+    /* Border Radius */
+    --radius: 0.5rem;
+  }
 
-.dark {
-  /* Dark theme colors */
-  --bg-primary: #0a0a0a;
-  --bg-secondary: #171717;
-  --bg-tertiary: #262626;
-  --text-primary: #fafafa;
-  --text-secondary: #a3a3a3;
-  --text-tertiary: #737373;
-  --border-color: #404040;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  .dark {
+    /* Dark Mode - Professional ERP Palette */
+    /* Background Colors */
+    --background: 222 47% 11%; /* #0F172A - Dark app background */
+    --foreground: 210 20% 98%; /* #F8FAFC - Light text */
+    
+    /* Card Colors */
+    --card: 222 47% 17%; /* Dark card background */
+    --card-foreground: 210 20% 98%; /* Light card text */
+    
+    /* Popover Colors */
+    --popover: 222 47% 17%; /* Dark popover */
+    --popover-foreground: 210 20% 98%; /* Light popover text */
+    
+    /* Primary Colors - Blue ONLY */
+    --primary: 217 91% 60%; /* #2563EB - Same primary in dark mode (BLUE ONLY) - RGB(37, 99, 235) */
+    --primary-foreground: 0 0% 100%; /* White text on primary */
+    
+    /* Secondary Colors */
+    --secondary: 215 28% 17%; /* Dark secondary */
+    --secondary-foreground: 210 20% 98%; /* Light secondary text */
+    
+    /* Muted Colors */
+    --muted: 215 28% 17%; /* Dark muted */
+    --muted-foreground: 215 16% 47%; /* #475569 - Muted text */
+    
+    /* Accent Colors */
+    --accent: 215 28% 17%; /* Dark accent */
+    --accent-foreground: 210 20% 98%; /* Light accent text */
+    
+    /* Destructive Colors */
+    --destructive: 0 72% 51%; /* Darker error for dark mode */
+    --destructive-foreground: 0 0% 100%; /* White on error */
+    
+    /* Border & Input Colors */
+    --border: 215 28% 17%; /* Dark border */
+    --input: 215 28% 17%; /* Dark input */
+    --ring: 217 91% 60%; /* Primary focus ring */
+  }
 }
 
 /* Base styles */
 @layer base {
+  * {
+    @apply border-border;
+  }
+  
   html {
     @apply min-h-full;
   }
   
   body {
-    @apply text-[var(--text-primary)] transition-colors duration-200 min-h-full;
-  }
-  
-  html:not(.dark) body {
-    @apply bg-light-gradient;
-  }
-  
-  html.dark body {
-    @apply bg-[var(--bg-primary)];
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
-
-/* Component styles */
-@layer components {
-  /* Add custom component styles here if needed */
-}
-
-/* Utility styles */
-@layer utilities {
-  /* Add custom utility classes here if needed */
-}
-

@@ -31,7 +31,7 @@ export default function GlobalAuthGuard({ children }) {
   if (loading && !publicRoutes.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-purple-700 dark:text-purple-300">Loading...</div>
+        <div className="text-muted-foreground">Loading...</div>
       </div>
     );
   }
@@ -41,9 +41,7 @@ export default function GlobalAuthGuard({ children }) {
   if (!isAuthenticated && !publicRoutes.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-purple-700 dark:text-purple-300">
-          Redirecting...
-        </div>
+        <div className="text-muted-foreground">Redirecting...</div>
       </div>
     );
   }
