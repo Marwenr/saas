@@ -698,7 +698,9 @@ export default function CustomerForm({ customer, onClose, open = true }) {
                                 name={`vehicles.${index}.acquisitionDate`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel>Date d'acquisition</FormLabel>
+                                    <FormLabel>
+                                      Date d&apos;acquisition
+                                    </FormLabel>
                                     <FormControl>
                                       <Input type="date" {...field} />
                                     </FormControl>
