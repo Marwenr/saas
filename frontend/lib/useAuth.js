@@ -1,6 +1,12 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { getCurrentUser, login, registerCompany, logout } from './api';
 
 const AuthContext = createContext(null);
@@ -26,7 +32,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(!!u);
   };
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       setLoading(true);
       const data = await getCurrentUser(); // /auth/me
@@ -41,7 +47,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const loginUser = async (email, password) => {
     // Don't set global loading to true here - let the login page handle its own loading state
@@ -91,7 +97,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     checkAuth();
-  }, []);
+  }, [checkAuth]);
 
   // Extract convenient fields for multi-tenant context
   // Priority: user.companyId > company.id (user.companyId is the source of truth)

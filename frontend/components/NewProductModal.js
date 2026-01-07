@@ -342,7 +342,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="purchasePrice">
-                        Prix d'achat (HT) (TND)
+                        Prix d&apos;achat (HT) (TND)
                       </Label>
                       <Input
                         type="number"

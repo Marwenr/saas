@@ -447,7 +447,7 @@ export default function ProductForm({
                       name="purchasePrice"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Prix d'achat (HT) (TND)</FormLabel>
+                          <FormLabel>Prix d&apos;achat (HT) (TND)</FormLabel>
                           <FormControl>
                             <Input
                               type="number"

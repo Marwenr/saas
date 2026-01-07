@@ -177,7 +177,8 @@ export default function StockAdjustmentForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Type d'opération <span className="text-destructive">*</span>
+                    Type d&apos;opération{' '}
+                    <span className="text-destructive">*</span>
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}

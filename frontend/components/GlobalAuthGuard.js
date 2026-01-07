@@ -4,6 +4,9 @@ import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../lib/useAuth';
 
+// Public routes that don't require authentication
+const publicRoutes = ['/login', '/register'];
+
 /**
  * GlobalAuthGuard component - redirects to login if not authenticated
  * Excludes /login and /register from redirection
@@ -12,9 +15,6 @@ export default function GlobalAuthGuard({ children }) {
   const { loading, isAuthenticated } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-
-  // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/register'];
 
   useEffect(() => {
     // Only redirect if auth check is complete and user is not authenticated

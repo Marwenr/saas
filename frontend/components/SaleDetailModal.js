@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchSale } from '../lib/pos';
 import {
@@ -32,17 +32,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
   const [error, setError] = useState(null);
   const [sale, setSale] = useState(null);
 
-  useEffect(() => {
-    if (isOpen && saleId) {
-      loadSale();
-    } else {
-      setSale(null);
-      setError(null);
-      setLoading(true);
-    }
-  }, [isOpen, saleId]);
-
-  const loadSale = async () => {
+  const loadSale = useCallback(async () => {
     if (!saleId) return;
     try {
       setLoading(true);
@@ -55,7 +45,17 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [saleId]);
+
+  useEffect(() => {
+    if (isOpen && saleId) {
+      loadSale();
+    } else {
+      setSale(null);
+      setError(null);
+      setLoading(true);
+    }
+  }, [isOpen, saleId, loadSale]);
 
   const getPaymentMethodBadge = method => {
     const variantMap = {
