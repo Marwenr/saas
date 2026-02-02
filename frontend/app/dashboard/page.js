@@ -71,7 +71,9 @@ function DashboardPage() {
 
       if (period === 'range') {
         if (!from || !to) {
-          setError('Please select both start and end dates for custom range');
+          setError(
+            'Veuillez sélectionner les dates de début et de fin pour la plage personnalisée'
+          );
           setLoading(false);
           return;
         }
@@ -94,14 +96,16 @@ function DashboardPage() {
       setTopProducts(topProductsData);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
+      setError(
+        err.message || 'Échec du chargement des données du tableau de bord'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const formatCurrency = value => {
-    return `${(value || 0).toFixed(2)} TND`;
+    return `${(value || 0).toFixed(3)} TND`;
   };
 
   const formatNumber = value => {
@@ -113,7 +117,7 @@ function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground">Chargement...</div>
         </div>
       </div>
     );
@@ -122,17 +126,17 @@ function DashboardPage() {
   const getPeriodLabel = () => {
     switch (period) {
       case 'day':
-        return 'Today';
+        return "Aujourd'hui";
       case 'week':
-        return 'This week';
+        return 'Cette semaine';
       case 'month':
-        return 'This month';
+        return 'Ce mois';
       case 'year':
-        return 'This year';
+        return 'Cette année';
       case 'range':
-        return 'Custom range';
+        return 'Plage personnalisée';
       default:
-        return 'This period';
+        return 'Cette période';
     }
   };
 
@@ -141,23 +145,24 @@ function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Tableau de bord</h1>
           <p className="text-muted-foreground mt-1">
-            Overview of your sales, stock alerts, and top products
+            Vue d'ensemble de vos ventes, alertes de stock et produits les plus
+            vendus
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm" className="gap-2">
             <LayoutGrid className="h-4 w-4" />
-            Customize widget
+            Personnaliser le widget
           </Button>
           <Button variant="outline" size="sm" className="gap-2">
             <Filter className="h-4 w-4" />
-            Filter
+            Filtrer
           </Button>
           <Button variant="outline" size="sm" className="gap-2">
             <Share2 className="h-4 w-4" />
-            Share
+            Partager
           </Button>
         </div>
       </div>
@@ -171,23 +176,25 @@ function DashboardPage() {
       {/* Period Filter */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Select the time period and options</CardDescription>
+          <CardTitle>Filtres</CardTitle>
+          <CardDescription>
+            Sélectionnez la période et les options
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="period">Period</Label>
+              <Label htmlFor="period">Période</Label>
               <Select value={period} onValueChange={setPeriod}>
                 <SelectTrigger id="period">
-                  <SelectValue placeholder="Select period" />
+                  <SelectValue placeholder="Sélectionner une période" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="day">Today</SelectItem>
-                  <SelectItem value="week">This Week</SelectItem>
-                  <SelectItem value="month">This Month</SelectItem>
-                  <SelectItem value="year">This Year</SelectItem>
-                  <SelectItem value="range">Custom Range</SelectItem>
+                  <SelectItem value="day">Aujourd'hui</SelectItem>
+                  <SelectItem value="week">Cette semaine</SelectItem>
+                  <SelectItem value="month">Ce mois</SelectItem>
+                  <SelectItem value="year">Cette année</SelectItem>
+                  <SelectItem value="range">Plage personnalisée</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -195,7 +202,7 @@ function DashboardPage() {
             {period === 'range' && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="from">From Date</Label>
+                  <Label htmlFor="from">Date de début</Label>
                   <Input
                     id="from"
                     type="date"
@@ -204,7 +211,7 @@ function DashboardPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="to">To Date</Label>
+                  <Label htmlFor="to">Date de fin</Label>
                   <Input
                     id="to"
                     type="date"
@@ -216,7 +223,7 @@ function DashboardPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="limit">Top Products Limit</Label>
+              <Label htmlFor="limit">Limite produits top</Label>
               <Input
                 id="limit"
                 type="number"
@@ -240,16 +247,16 @@ function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">
-                Sales Overview
+                Vue d'ensemble des ventes
               </h2>
               <p className="text-muted-foreground mt-1">
-                Key performance indicators for your business
+                Indicateurs clés de performance pour votre entreprise
               </p>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <KPICard
-              title="Total Sales (TND)"
+              title="Ventes totales (TND)"
               currentValue={salesSummary.summary.totalRevenueIncl || 0}
               previousValue={
                 salesSummary.previousSummary?.totalRevenueIncl ||
@@ -261,7 +268,7 @@ function DashboardPage() {
               period={getPeriodLabel()}
             />
             <KPICard
-              title="Number of Sales"
+              title="Nombre de ventes"
               currentValue={
                 salesSummary.summary.totalOrders ||
                 salesSummary.summary.totalSales ||
@@ -279,7 +286,7 @@ function DashboardPage() {
               period={getPeriodLabel()}
             />
             <KPICard
-              title="Total Quantity Sold"
+              title="Quantité totale vendue"
               currentValue={
                 salesSummary.summary.totalQty ||
                 salesSummary.summary.totalItems ||
@@ -308,13 +315,13 @@ function DashboardPage() {
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 <div>
-                  <CardTitle>Stock Alerts</CardTitle>
+                  <CardTitle>Alertes de stock</CardTitle>
                   <CardDescription>
-                    Products below minimum stock threshold
+                    Produits en dessous du seuil de stock minimum
                     {stockAlerts?.totalAlerts !== undefined && (
                       <Badge variant="outline" className="ml-2">
                         {stockAlerts.totalAlerts}{' '}
-                        {stockAlerts.totalAlerts === 1 ? 'alert' : 'alerts'}
+                        {stockAlerts.totalAlerts === 1 ? 'alerte' : 'alertes'}
                       </Badge>
                     )}
                   </CardDescription>
@@ -339,7 +346,7 @@ function DashboardPage() {
                           <div className="flex-1">
                             <div className="font-medium">{item.name}</div>
                             <div className="text-sm text-muted-foreground mt-1">
-                              SKU: {item.sku}
+                              Réf. fabricant: {item.manufacturerRef}
                               {item.brand &&
                                 ` • ${item.brand?.name || item.brand}`}
                             </div>
@@ -374,8 +381,8 @@ function DashboardPage() {
                           </div>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Difference: {item.difference > 0 ? '+' : ''}
-                          {item.difference} units
+                          Différence : {item.difference > 0 ? '+' : ''}
+                          {item.difference} unités
                         </div>
                       </CardContent>
                     </Card>
@@ -385,7 +392,10 @@ function DashboardPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400 mx-auto mb-2" />
-                <div>No stock alerts. All products are well stocked!</div>
+                <div>
+                  Aucune alerte de stock. Tous les produits sont bien
+                  approvisionnés !
+                </div>
               </div>
             )}
           </CardContent>
@@ -398,9 +408,9 @@ function DashboardPage() {
               <div className="flex items-center gap-3">
                 <Trophy className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                 <div>
-                  <CardTitle>Top Products</CardTitle>
+                  <CardTitle>Produits les plus vendus</CardTitle>
                   <CardDescription>
-                    Best-selling products by quantity
+                    Produits les plus vendus par quantité
                     {topProducts?.dateRange && (
                       <span className="ml-2">
                         (
@@ -442,7 +452,7 @@ function DashboardPage() {
                                 {product.name}
                               </div>
                               <div className="text-sm text-muted-foreground mt-1">
-                                SKU: {product.sku}
+                                Réf. fabricant: {product.manufacturerRef}
                                 {product.brand &&
                                   ` • ${product.brand?.name || product.brand}`}
                               </div>
@@ -453,7 +463,7 @@ function DashboardPage() {
                               {formatNumber(product.totalQty)}
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              units sold
+                              unités vendues
                             </div>
                             <div className="text-sm font-medium text-green-600 dark:text-green-400 mt-1">
                               {formatCurrency(product.totalRevenue)}
@@ -474,7 +484,9 @@ function DashboardPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <BarChart3 className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-                <div>No sales data found for the selected period</div>
+                <div>
+                  Aucune donnée de vente trouvée pour la période sélectionnée
+                </div>
               </div>
             )}
           </CardContent>
@@ -484,8 +496,8 @@ function DashboardPage() {
       {/* Date Range Info */}
       {salesSummary?.dateRange && (
         <div className="text-sm text-muted-foreground text-center">
-          Period: {new Date(salesSummary.dateRange.from).toLocaleDateString()} -{' '}
-          {new Date(salesSummary.dateRange.to).toLocaleDateString()}
+          Période : {new Date(salesSummary.dateRange.from).toLocaleDateString()}{' '}
+          - {new Date(salesSummary.dateRange.to).toLocaleDateString()}
         </div>
       )}
     </div>

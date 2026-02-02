@@ -44,19 +44,20 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
     formState: { errors },
   } = useForm({
     defaultValues: {
-      sku: '',
+      manufacturerRef: '',
       name: '',
       brand: '',
       brandId: null,
       purchasePrice: '',
       salePrice: '',
-      taxRate: '0',
-      marginRate: '0',
+      taxRate: '19',
+      marginRate: '40',
     },
   });
 
   const purchasePrice = watch('purchasePrice');
   const marginRate = watch('marginRate');
+  const taxRate = watch('taxRate');
   const brand = watch('brand');
 
   // Reset form when modal closes
@@ -109,17 +110,21 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Auto-calculate salePrice when purchasePrice or marginRate changes
+  // Auto-calculate salePrice (TTC) when purchasePrice, marginRate, or taxRate changes
   useEffect(() => {
-    const price = parseFloat(purchasePrice);
-    const margin = parseFloat(marginRate) || 0;
+    const price = parseFloat(purchasePrice) || 0;
+    const margin = parseFloat(marginRate) || 40;
+    const tax = parseFloat(taxRate) || 19;
 
     // Only auto-calculate if purchasePrice is provided and valid
     if (price > 0 && !isNaN(price) && margin >= 0) {
-      const calculatedSalePrice = price * (1 + margin / 100);
-      setValue('salePrice', calculatedSalePrice.toFixed(2));
+      // Calculate HT with margin
+      const priceHT = price * (1 + margin / 100);
+      // Calculate TTC with tax
+      const priceTTC = priceHT * (1 + tax / 100);
+      setValue('salePrice', priceTTC.toFixed(3));
     }
-  }, [purchasePrice, marginRate, setValue]);
+  }, [purchasePrice, marginRate, taxRate, setValue]);
 
   const handleBrandChange = e => {
     const value = e.target.value;
@@ -161,20 +166,20 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
       const brandPayload = data.brandId || data.brand.trim() || undefined;
 
       const payload = {
-        sku: data.sku.trim(),
+        manufacturerRef: data.manufacturerRef.trim(),
         name: data.name.trim(),
         brand: brandPayload,
         purchasePrice: data.purchasePrice
           ? parseFloat(data.purchasePrice)
           : undefined,
         salePrice: data.salePrice ? parseFloat(data.salePrice) : undefined,
-        taxRate: data.taxRate ? parseFloat(data.taxRate) : 0,
-        marginRate: data.marginRate ? parseFloat(data.marginRate) : 0,
+        taxRate: data.taxRate ? parseFloat(data.taxRate) : 19,
+        marginRate: data.marginRate ? parseFloat(data.marginRate) : 40,
       };
 
       // Validate required fields
-      if (!payload.sku || !payload.name) {
-        throw new Error('SKU et nom sont obligatoires');
+      if (!payload.manufacturerRef || !payload.name) {
+        throw new Error('manufacturerRef et nom sont obligatoires');
       }
 
       if (
@@ -243,24 +248,25 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
 
               {/* Form fields */}
               <div className="space-y-4">
-                {/* SKU and Name - Required */}
+                {/* manufacturerRef and Name - Required */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="sku">
-                      SKU <span className="text-destructive">*</span>
+                    <Label htmlFor="manufacturerRef">
+                      Référence fabricant{' '}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       type="text"
-                      id="sku"
-                      placeholder="SKU-001"
+                      id="manufacturerRef"
+                      placeholder="REF-001"
                       disabled={loading}
-                      {...register('sku', {
-                        required: 'SKU is required',
+                      {...register('manufacturerRef', {
+                        required: 'manufacturerRef is required',
                       })}
                     />
-                    {errors.sku && (
+                    {errors.manufacturerRef && (
                       <p className="text-sm text-destructive">
-                        {errors.sku.message}
+                        {errors.manufacturerRef.message}
                       </p>
                     )}
                   </div>
@@ -349,7 +355,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                         id="purchasePrice"
                         placeholder="0.00"
                         min="0"
-                        step="0.01"
+                        step="0.001"
                         disabled={loading}
                         {...register('purchasePrice', {
                           min: { value: 0, message: 'Must be >= 0' },
@@ -369,7 +375,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                         id="marginRate"
                         placeholder="0"
                         min="0"
-                        step="0.01"
+                        step="0.001"
                         disabled={loading}
                         {...register('marginRate', {
                           min: { value: 0, message: 'Must be >= 0' },
@@ -381,7 +387,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="salePrice">
-                        Prix de vente (HT) (TND){' '}
+                        Prix de vente (TTC) (TND){' '}
                         <span className="text-xs text-muted-foreground">
                           (calculé automatiquement)
                         </span>
@@ -391,7 +397,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                         id="salePrice"
                         placeholder="0.00"
                         min="0"
-                        step="0.01"
+                        step="0.001"
                         disabled={loading}
                         {...register('salePrice', {
                           min: { value: 0, message: 'Must be >= 0' },
@@ -407,7 +413,7 @@ export default function NewProductModal({ onClose, onCreated, open = true }) {
                         placeholder="0"
                         min="0"
                         max="100"
-                        step="0.01"
+                        step="0.001"
                         disabled={loading}
                         {...register('taxRate', {
                           min: { value: 0, message: 'Must be >= 0' },

@@ -71,7 +71,10 @@ export default function RegisterPage() {
       router.push('/');
       router.refresh();
     } catch (err) {
-      setError(err.message || 'Failed to register company. Please try again.');
+      setError(
+        err.message ||
+          "Échec de l'inscription de l'entreprise. Veuillez réessayer."
+      );
     } finally {
       setLoading(false);
     }
@@ -81,19 +84,17 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center py-12 min-h-screen">
       <div className="max-w-2xl w-full mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            Create Your Shop / Créer mon magasin
-          </h1>
+          <h1 className="text-3xl font-bold mb-2">Créer votre magasin</h1>
           <p className="text-muted-foreground">
-            Create your company account and get started
+            Créez votre compte entreprise et commencez
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Register</CardTitle>
+            <CardTitle>Inscription</CardTitle>
             <CardDescription>
-              Create your company and owner account
+              Créez votre entreprise et votre compte propriétaire
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -111,22 +112,22 @@ export default function RegisterPage() {
                 {/* Company Information */}
                 <div>
                   <h2 className="text-xl font-semibold mb-4 pb-2 border-b">
-                    Company Information
+                    Informations de l'entreprise
                   </h2>
                   <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="companyName"
-                      rules={{ required: 'Company name is required' }}
+                      rules={{ required: "Le nom de l'entreprise est requis" }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Company Name{' '}
+                            Nom de l'entreprise{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="My Auto Parts Store"
+                              placeholder="Mon magasin de pièces auto"
                               disabled={loading}
                               {...field}
                             />
@@ -140,22 +141,22 @@ export default function RegisterPage() {
                       control={form.control}
                       name="companyEmail"
                       rules={{
-                        required: 'Company email is required',
+                        required: "L'email de l'entreprise est requis",
                         pattern: {
                           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Invalid email address',
+                          message: 'Adresse email invalide',
                         },
                       }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Company Email{' '}
+                            Email de l'entreprise{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="company@example.com"
+                              placeholder="entreprise@exemple.com"
                               disabled={loading}
                               {...field}
                             />
@@ -170,7 +171,7 @@ export default function RegisterPage() {
                       name="companyPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Company Phone</FormLabel>
+                          <FormLabel>Téléphone de l'entreprise</FormLabel>
                           <FormControl>
                             <Input
                               type="tel"
@@ -189,7 +190,7 @@ export default function RegisterPage() {
                       name="companyCountry"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Country</FormLabel>
+                          <FormLabel>Pays</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="TN"
@@ -207,7 +208,7 @@ export default function RegisterPage() {
                 {/* Owner Account */}
                 <div>
                   <h2 className="text-xl font-semibold mb-4 pb-2 border-b">
-                    Owner Account
+                    Compte propriétaire
                   </h2>
                   <div className="space-y-4">
                     <FormField
@@ -215,10 +216,10 @@ export default function RegisterPage() {
                       name="ownerFullName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel>Nom complet</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="John Doe"
+                              placeholder="Jean Dupont"
                               disabled={loading}
                               {...field}
                             />
@@ -232,22 +233,22 @@ export default function RegisterPage() {
                       control={form.control}
                       name="ownerEmail"
                       rules={{
-                        required: 'Email address is required',
+                        required: "L'adresse email est requise",
                         pattern: {
                           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: 'Invalid email address',
+                          message: 'Adresse email invalide',
                         },
                       }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Email Address{' '}
+                            Adresse email{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="you@example.com"
+                              placeholder="vous@exemple.com"
                               disabled={loading}
                               {...field}
                             />
@@ -261,16 +262,18 @@ export default function RegisterPage() {
                       control={form.control}
                       name="ownerPassword"
                       rules={{
-                        required: 'Password is required',
+                        required: 'Le mot de passe est requis',
                         minLength: {
                           value: 6,
-                          message: 'Password must be at least 6 characters',
+                          message:
+                            'Le mot de passe doit contenir au moins 6 caractères',
                         },
                       }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Password <span className="text-destructive">*</span>
+                            Mot de passe{' '}
+                            <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -281,7 +284,7 @@ export default function RegisterPage() {
                             />
                           </FormControl>
                           <FormDescription>
-                            Must be at least 6 characters
+                            Doit contenir au moins 6 caractères
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -292,14 +295,15 @@ export default function RegisterPage() {
                       control={form.control}
                       name="ownerPasswordConfirm"
                       rules={{
-                        required: 'Please confirm your password',
+                        required: 'Veuillez confirmer votre mot de passe',
                         validate: value =>
-                          value === password || 'Passwords do not match',
+                          value === password ||
+                          'Les mots de passe ne correspondent pas',
                       }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Confirm Password{' '}
+                            Confirmer le mot de passe{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
@@ -321,10 +325,10 @@ export default function RegisterPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating your shop...
+                      Création de votre magasin...
                     </>
                   ) : (
-                    'Create My Shop'
+                    'Créer mon magasin'
                   )}
                 </Button>
               </form>
@@ -337,7 +341,7 @@ export default function RegisterPage() {
                 onClick={() => router.push('/login')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                Sign In to Your Account
+                Se connecter à votre compte
               </Button>
             </div>
           </CardContent>

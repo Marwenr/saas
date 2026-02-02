@@ -29,8 +29,20 @@ async function fetchAPI(endpoint, options = {}) {
   return data;
 }
 
-export async function fetchRecommendedSuppliersReport() {
-  return fetchAPI('/api/reports/recommended-suppliers');
+/**
+ * Fetch recommended suppliers report
+ * @param {Object} params - Query parameters
+ * @param {string} [params.search] - Search by reference (manufacturerRef, oemRefs), name, or any product fields
+ */
+export async function fetchRecommendedSuppliersReport(params = {}) {
+  const queryParams = new URLSearchParams();
+
+  if (params.search) queryParams.set('search', params.search);
+
+  const queryString = queryParams.toString();
+  const endpoint = `/api/reports/recommended-suppliers${queryString ? `?${queryString}` : ''}`;
+
+  return fetchAPI(endpoint);
 }
 
 /**

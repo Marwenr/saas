@@ -139,7 +139,9 @@ export default function StockAdjustmentForm({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Ajuster le stock</DialogTitle>
-          <DialogDescription>{product.name || product.sku}</DialogDescription>
+          <DialogDescription>
+            {product.name || product.manufacturerRef}
+          </DialogDescription>
         </DialogHeader>
 
         {/* Current stock info */}

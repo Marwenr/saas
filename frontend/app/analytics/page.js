@@ -95,7 +95,7 @@ function AnalyticsPage() {
   };
 
   const formatCurrency = value => {
-    return `${(value || 0).toFixed(2)} TND`;
+    return `${(value || 0).toFixed(3)} TND`;
   };
 
   const formatNumber = value => {

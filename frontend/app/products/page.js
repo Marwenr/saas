@@ -179,7 +179,7 @@ function ProductsPage() {
     if (isNaN(numPrice)) {
       return '-';
     }
-    return `${numPrice.toFixed(2)} TND`;
+    return `${numPrice.toFixed(3)} TND`;
   };
 
   if (authLoading) {
@@ -195,10 +195,12 @@ function ProductsPage() {
 
   const columns = [
     {
-      key: 'sku',
-      header: 'SKU',
-      accessorKey: 'sku',
-      cell: row => <div className="font-medium">{row.sku || '-'}</div>,
+      key: 'manufacturerRef',
+      header: 'Réf. fabricant',
+      accessorKey: 'manufacturerRef',
+      cell: row => (
+        <div className="font-medium">{row.manufacturerRef || '-'}</div>
+      ),
     },
     {
       key: 'name',
@@ -234,8 +236,18 @@ function ProductsPage() {
       key: 'actions',
       header: 'Actions',
       cell: row => (
-        <div className="flex gap-2 justify-center">
-          <Button variant="outline" size="sm" onClick={() => handleEdit(row)}>
+        <div
+          className="flex gap-2 justify-center"
+          onClick={e => e.stopPropagation()}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={e => {
+              e.stopPropagation();
+              handleEdit(row);
+            }}
+          >
             <Edit className="h-4 w-4 mr-2" />
             Modifier
           </Button>
@@ -245,6 +257,7 @@ function ProductsPage() {
                 variant="destructive"
                 size="sm"
                 disabled={deleting === (row._id || row.id)}
+                onClick={e => e.stopPropagation()}
               >
                 {deleting === (row._id || row.id) ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -306,7 +319,7 @@ function ProductsPage() {
                   type="text"
                   value={searchInput}
                   onChange={e => setSearchInput(e.target.value)}
-                  placeholder="Rechercher par nom, SKU, OEM..."
+                  placeholder="Rechercher par nom, Réf. fabricant, OEM..."
                   className="pl-9"
                 />
               </div>

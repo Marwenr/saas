@@ -120,6 +120,18 @@ function PurchasesPage() {
     });
   };
 
+  const getInvoiceReference = purchaseOrder => {
+    // Try to extract invoice reference from notes
+    if (purchaseOrder.notes) {
+      const match = purchaseOrder.notes.match(/Référence facture:\s*(.+)/i);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    // Fallback to orderNumber if no invoice reference found
+    return purchaseOrder.orderNumber || '-';
+  };
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -201,7 +213,7 @@ function PurchasesPage() {
                 <thead>
                   <tr className="bg-muted/50 border-b border-border">
                     <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
-                      Numéro
+                      Référence facture
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
                       Fournisseur
@@ -229,7 +241,7 @@ function PurchasesPage() {
                         className="hover:bg-accent/50 transition-colors"
                       >
                         <td className="px-6 py-4 text-sm text-foreground font-semibold">
-                          {po.orderNumber || '-'}
+                          {getInvoiceReference(po)}
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground">
                           {po.supplierId?.name || '-'}
@@ -239,7 +251,7 @@ function PurchasesPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground font-semibold text-right">
                           {po.totalAmount !== undefined
-                            ? `${po.totalAmount.toFixed(2)} TND`
+                            ? `${po.totalAmount.toFixed(3)} TND`
                             : '-'}
                         </td>
                         <td className="px-6 py-4 text-center">

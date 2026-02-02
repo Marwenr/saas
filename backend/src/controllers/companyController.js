@@ -109,7 +109,7 @@ export async function registerCompany(request, reply) {
         companyId: company._id.toString(),
         role: owner.role || 'owner',
       },
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     const refreshToken = request.server.jwt.sign(
@@ -127,7 +127,7 @@ export async function registerCompany(request, reply) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });
 

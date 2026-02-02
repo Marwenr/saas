@@ -17,6 +17,7 @@ import PurchaseOrder from '../models/purchaseOrder.model.js';
 import Sale from '../models/sale.model.js';
 import { authenticate } from '../utils/auth.js';
 import { getUserCompanyId } from '../utils/company.js';
+import { calculateRecommendedSalePrice } from '../utils/pricing.js';
 
 async function productRoutes(fastify, _options) {
   // All routes require authentication
@@ -242,6 +243,9 @@ async function productRoutes(fastify, _options) {
         averagePrice: averageSalePrice,
         historyLimit: limitHistory,
       };
+
+      // Calculate salePrice on-the-fly (not stored in DB)
+      product.salePrice = calculateRecommendedSalePrice(product);
 
       return reply.send({
         product,

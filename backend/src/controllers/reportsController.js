@@ -28,22 +28,45 @@ function computeRecommendedSupplierEntry(supplierInfos) {
 /**
  * GET /reports/recommended-suppliers
  * Returns a list of products with their recommended supplier summary
+ * Query params:
+ *   - search: string - Search by reference (manufacturerRef, oemRefs), name, or any product fields
  */
 export async function getRecommendedSuppliersReport(request, reply) {
   try {
     const companyFilter = getCompanyFilter(request.user);
-    const products = await Product.find({
+    const searchQuery = request.query.search;
+
+    // Build the base query
+    const query = {
       ...companyFilter,
       isDeleted: false,
-    })
-      .select('sku name supplierInfos')
+    };
+
+    // Add search filter if provided
+    if (searchQuery && searchQuery.trim()) {
+      const searchRegex = new RegExp(searchQuery.trim(), 'i'); // Case-insensitive search
+      query.$or = [
+        { name: searchRegex },
+        { manufacturerRef: searchRegex },
+        { oemRefs: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex },
+        { subCategory: searchRegex },
+        { tags: searchRegex },
+      ];
+    }
+
+    const products = await Product.find(query)
+      .select(
+        'manufacturerRef name oemRefs description category subCategory tags supplierInfos'
+      )
       .lean();
 
     const data = products.map(p => {
       const rec = computeRecommendedSupplierEntry(p.supplierInfos || []);
       return {
         productId: p._id,
-        sku: p.sku,
+        manufacturerRef: p.manufacturerRef,
         name: p.name,
         recommendedSupplierId: rec && rec.supplierId ? rec.supplierId : null,
         recommendedSupplierName:
@@ -306,8 +329,8 @@ export async function getSalesProductsReport(request, reply) {
           productName: {
             $ifNull: ['$product.name', 'Unknown Product'],
           },
-          productSku: {
-            $ifNull: ['$product.sku', 'N/A'],
+          productManufacturerRef: {
+            $ifNull: ['$product.manufacturerRef', 'N/A'],
           },
           purchasePrice: {
             $ifNull: ['$product.purchasePrice', 0],
@@ -351,7 +374,7 @@ export async function getSalesProductsReport(request, reply) {
         $project: {
           _id: 0,
           productId: '$_id',
-          sku: '$productSku',
+          manufacturerRef: '$productManufacturerRef',
           name: '$productName',
           totalQty: 1,
           totalRevenueExcl: { $round: ['$totalRevenueExcl', 2] },
@@ -547,11 +570,11 @@ export async function getSalesProductsReport(request, reply) {
 
       // Add new fields to product
       product.periodAvgPurchasePrice =
-        Math.round(periodAvgPurchasePrice * 100) / 100;
+        Math.round(periodAvgPurchasePrice * 1000) / 1000;
       product.periodAvgSource = periodAvgSource;
-      product.periodCostTotal = Math.round(periodCostTotal * 100) / 100;
-      product.periodMargin = Math.round(periodMargin * 100) / 100;
-      product.periodMarginRate = Math.round(periodMarginRate * 100) / 100;
+      product.periodCostTotal = Math.round(periodCostTotal * 1000) / 1000;
+      product.periodMargin = Math.round(periodMargin * 1000) / 1000;
+      product.periodMarginRate = Math.round(periodMarginRate * 1000) / 1000;
     }
 
     // Also check if there are sales with items
@@ -752,11 +775,11 @@ export async function getSalesProductsReport(request, reply) {
       products,
       totals: {
         totalQty: totals.totalQty,
-        totalRevenueExcl: Math.round(totals.totalRevenueExcl * 100) / 100,
-        totalRevenueIncl: Math.round(totals.totalRevenueIncl * 100) / 100,
-        totalCost: Math.round(totalCost * 100) / 100,
-        totalMarginExcl: Math.round(totalMarginExcl * 100) / 100,
-        totalMarginRate: Math.round(totalMarginRate * 100) / 100,
+        totalRevenueExcl: Math.round(totals.totalRevenueExcl * 1000) / 1000,
+        totalRevenueIncl: Math.round(totals.totalRevenueIncl * 1000) / 1000,
+        totalCost: Math.round(totalCost * 1000) / 1000,
+        totalMarginExcl: Math.round(totalMarginExcl * 1000) / 1000,
+        totalMarginRate: Math.round(totalMarginRate * 1000) / 1000,
       },
     });
   } catch (error) {
@@ -808,7 +831,7 @@ export async function getStockAlertsReport(request, reply) {
 
     // Query products
     const products = await Product.find(query)
-      .select('_id sku name brand stockQty minStock')
+      .select('_id manufacturerRef name brand stockQty minStock')
       .sort({ stockQty: sortOrder })
       .limit(limit)
       .lean();
@@ -816,7 +839,7 @@ export async function getStockAlertsReport(request, reply) {
     // Format response
     const items = products.map(p => ({
       productId: p._id.toString(),
-      sku: p.sku,
+      manufacturerRef: p.manufacturerRef,
       name: p.name,
       brand: p.brand || null,
       stockQty: p.stockQty,
@@ -981,7 +1004,7 @@ export async function getTopProductsReport(request, reply) {
         $project: {
           _id: 0,
           productId: '$_id',
-          sku: { $ifNull: ['$product.sku', 'N/A'] },
+          manufacturerRef: { $ifNull: ['$product.manufacturerRef', 'N/A'] },
           name: { $ifNull: ['$product.name', 'Unknown Product'] },
           brand: { $ifNull: ['$product.brand', null] },
           totalQty: 1,
@@ -1245,12 +1268,12 @@ export async function getSalesSummaryReport(request, reply) {
     const formattedSummary = {
       totalSales: summary.totalSales,
       totalOrders: summary.totalSales, // Alias for consistency
-      totalRevenueExcl: Math.round(summary.totalRevenueExcl * 100) / 100,
-      totalRevenueIncl: Math.round(summary.totalRevenueIncl * 100) / 100,
-      totalTax: Math.round(summary.totalTax * 100) / 100,
+      totalRevenueExcl: Math.round(summary.totalRevenueExcl * 1000) / 1000,
+      totalRevenueIncl: Math.round(summary.totalRevenueIncl * 1000) / 1000,
+      totalTax: Math.round(summary.totalTax * 1000) / 1000,
       totalItems: summary.totalItems,
       totalQty: summary.totalItems, // Alias for consistency
-      averageSaleValue: Math.round(averageSaleValue * 100) / 100,
+      averageSaleValue: Math.round(averageSaleValue * 1000) / 1000,
     };
 
     // Format previous period summary data
@@ -1258,13 +1281,13 @@ export async function getSalesSummaryReport(request, reply) {
       totalSales: previousSummary.totalSales,
       totalOrders: previousSummary.totalSales, // Alias for consistency
       totalRevenueExcl:
-        Math.round(previousSummary.totalRevenueExcl * 100) / 100,
+        Math.round(previousSummary.totalRevenueExcl * 1000) / 1000,
       totalRevenueIncl:
-        Math.round(previousSummary.totalRevenueIncl * 100) / 100,
-      totalTax: Math.round(previousSummary.totalTax * 100) / 100,
+        Math.round(previousSummary.totalRevenueIncl * 1000) / 1000,
+      totalTax: Math.round(previousSummary.totalTax * 1000) / 1000,
       totalItems: previousSummary.totalItems,
       totalQty: previousSummary.totalItems, // Alias for consistency
-      averageSaleValue: Math.round(previousAverageSaleValue * 100) / 100,
+      averageSaleValue: Math.round(previousAverageSaleValue * 1000) / 1000,
     };
 
     return reply.send({
@@ -1284,7 +1307,7 @@ export async function getSalesSummaryReport(request, reply) {
       paymentMethods: paymentMethods.map(pm => ({
         method: pm._id || 'UNKNOWN',
         count: pm.count,
-        totalRevenue: Math.round(pm.totalRevenue * 100) / 100,
+        totalRevenue: Math.round(pm.totalRevenue * 1000) / 1000,
       })),
     });
   } catch (error) {

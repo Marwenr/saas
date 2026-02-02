@@ -194,7 +194,7 @@ function InventoryPage() {
                 <thead>
                   <tr className="bg-muted/50 border-b border-border">
                     <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
-                      SKU
+                      Réf. fabricant
                     </th>
                     <th className="px-6 py-4 text-left text-sm font-bold text-foreground uppercase tracking-wide">
                       Nom
@@ -230,7 +230,7 @@ function InventoryPage() {
                         className="hover:bg-accent/50 transition-colors"
                       >
                         <td className="px-6 py-4 text-sm text-foreground font-medium">
-                          {product.sku || '-'}
+                          {product.manufacturerRef || '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground">
                           {product.name || '-'}

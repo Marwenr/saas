@@ -35,7 +35,7 @@ export default function LandingPage() {
         {/* Main Headline */}
         <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight px-4">
           <span className="text-foreground">
-            Manage Your Entire Business From One{' '}
+            Gérez toute votre entreprise depuis un seul{' '}
           </span>
           <span className="text-primary relative inline-block">
             CloudERP
@@ -46,8 +46,8 @@ export default function LandingPage() {
 
         {/* Sub-headline */}
         <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 mb-12 max-w-3xl mx-auto px-4 font-normal">
-          A smart ERP system that unifies sales, accounting, HR, and inventory
-          into one powerful dashboard
+          Un système ERP intelligent qui unifie les ventes, la comptabilité, les
+          RH et l'inventaire dans un tableau de bord puissant
         </p>
 
         {/* CTA Buttons */}
@@ -60,7 +60,7 @@ export default function LandingPage() {
             className="gap-2"
           >
             <Play className="w-5 h-5" />
-            Watch Demo
+            Voir la démo
           </Button>
 
           {/* Start Free Trial Button */}
@@ -70,7 +70,7 @@ export default function LandingPage() {
             onClick={handleGetStarted}
             className="gap-2"
           >
-            Start Your Free Trial
+            Démarrer votre essai gratuit
             <ArrowRight className="w-5 h-5" />
           </Button>
         </div>

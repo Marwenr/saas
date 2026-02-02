@@ -279,7 +279,7 @@ function POSPage() {
       const baseUnitPrice = product.salePrice || 0;
       const newItem = {
         productId: product._id || product.id,
-        sku: product.sku || '',
+        manufacturerRef: product.manufacturerRef || '',
         name: product.name || '',
         baseUnitPrice,
         discountRate: 0,
@@ -320,7 +320,7 @@ function POSPage() {
       const baseUnitPrice = partPrice || product.salePrice || 0;
       const newItem = {
         productId: product._id || product.id,
-        sku: product.sku || '',
+        manufacturerRef: product.manufacturerRef || '',
         name: product.name || '',
         baseUnitPrice,
         discountRate: partDiscount || 0,
@@ -389,7 +389,7 @@ function POSPage() {
     if (newSelected.size === 1) {
       const item = cart.find(i => i.productId === productId);
       if (item) {
-        setEditPrice(item.baseUnitPrice.toFixed(2));
+        setEditPrice(item.baseUnitPrice.toFixed(3));
         setEditDiscount(item.discountRate.toString());
       }
     } else if (newSelected.size > 1) {
@@ -419,7 +419,7 @@ function POSPage() {
       const discounts = cart.map(i => i.discountRate);
       const allSamePrice = prices.every(p => p === prices[0]);
       const allSameDiscount = discounts.every(d => d === discounts[0]);
-      setEditPrice(allSamePrice ? prices[0].toFixed(2) : '');
+      setEditPrice(allSamePrice ? prices[0].toFixed(3) : '');
       setEditDiscount(allSameDiscount ? discounts[0].toString() : '');
     }
   };
@@ -956,11 +956,12 @@ function POSPage() {
                           className="px-4 py-2 hover:bg-muted cursor-pointer border-b border-border last:border-b-0"
                         >
                           <div className="font-medium text-foreground text-sm">
-                            {product.sku || '-'} - {product.name || '-'}
+                            {product.manufacturerRef || '-'} -{' '}
+                            {product.name || '-'}
                           </div>
                           <div className="text-xs text-muted-foreground">
                             Stock: {product.stockQty || 0} | Prix:{' '}
-                            {product.salePrice?.toFixed(2) || '0.00'} TND
+                            {product.salePrice?.toFixed(3) || '0.00'} TND
                           </div>
                         </div>
                       ))}
@@ -1032,7 +1033,7 @@ function POSPage() {
                   <input
                     type="number"
                     min="0"
-                    step="0.01"
+                    step="0.001"
                     value={partPrice}
                     onChange={e =>
                       setPartPrice(parseFloat(e.target.value) || 0)
@@ -1128,7 +1129,7 @@ function POSPage() {
                         <input
                           type="number"
                           min="0"
-                          step="0.01"
+                          step="0.001"
                           value={editPrice}
                           onChange={e => setEditPrice(e.target.value)}
                           disabled={selectedItems.size >= 2}
@@ -1238,7 +1239,7 @@ function POSPage() {
                             </td>
                             <td className="px-4 py-3 text-sm text-foreground">
                               <div className="flex items-center gap-2">
-                                {item.sku}
+                                {item.manufacturerRef}
                                 {!lowStock && (
                                   <span className="w-2 h-2 rounded-full bg-green-500"></span>
                                 )}
@@ -1251,7 +1252,7 @@ function POSPage() {
                               {item.qty}
                             </td>
                             <td className="px-4 py-3 text-right text-sm text-foreground">
-                              {baseUnitPrice.toFixed(2)} TND
+                              {baseUnitPrice.toFixed(3)} TND
                             </td>
                             <td className="px-4 py-3 text-center text-sm text-foreground">
                               {discountRate > 0 ? (
@@ -1271,7 +1272,7 @@ function POSPage() {
                                   Stock Faible
                                 </div>
                               ) : (
-                                <span>{itemTotalInclTax.toFixed(2)} TND</span>
+                                <span>{itemTotalInclTax.toFixed(3)} TND</span>
                               )}
                             </td>
                             <td className="px-4 py-3 text-center">
@@ -1311,8 +1312,8 @@ function POSPage() {
                   Sous-Total avant tax
                 </span>
                 <span className="text-lg font-semibold text-foreground">
-                  {totals.subtotalExclTaxAfterDiscount?.toFixed(2) ||
-                    totals.totalExclTax.toFixed(2)}{' '}
+                  {totals.subtotalExclTaxAfterDiscount?.toFixed(3) ||
+                    totals.totalExclTax.toFixed(3)}{' '}
                   TND
                 </span>
               </div>
@@ -1323,8 +1324,8 @@ function POSPage() {
                   Sous-Total
                 </span>
                 <span className="text-lg font-semibold text-foreground">
-                  {totals.subtotalAfterGlobalDiscount?.toFixed(2) ||
-                    totals.subtotalInclTax.toFixed(2)}{' '}
+                  {totals.subtotalAfterGlobalDiscount?.toFixed(3) ||
+                    totals.subtotalInclTax.toFixed(3)}{' '}
                   TND
                 </span>
               </div>
@@ -1335,7 +1336,7 @@ function POSPage() {
                   TVA (19%)
                 </span>
                 <span className="text-lg font-semibold text-foreground">
-                  + {totals.totalTax.toFixed(2)} TND
+                  + {totals.totalTax.toFixed(3)} TND
                 </span>
               </div>
 
@@ -1345,7 +1346,7 @@ function POSPage() {
                   TOTAL À PAYER
                 </span>
                 <span className="text-2xl font-bold text-foreground">
-                  {totals.totalInclTax.toFixed(2)} TND
+                  {totals.totalInclTax.toFixed(3)} TND
                 </span>
               </div>
             </div>
@@ -1357,7 +1358,7 @@ function POSPage() {
                   Remise Fidélité ({totals.loyaltyDiscount}%)
                 </span>
                 <span className="text-sm font-semibold text-green-600 dark:text-green-400">
-                  - {totals.loyaltyDiscountAmount.toFixed(2)} TND
+                  - {totals.loyaltyDiscountAmount.toFixed(3)} TND
                 </span>
               </div>
             )}
@@ -1450,7 +1451,7 @@ function POSPage() {
                       {sale.items?.length || 0} article(s)
                     </td>
                     <td className="px-3 py-2 text-sm font-medium text-foreground text-right">
-                      {sale.totalInclTax?.toFixed(2) || '0.00'} TND
+                      {sale.totalInclTax?.toFixed(3) || '0.00'} TND
                     </td>
                     <td className="px-3 py-2 text-sm text-center">
                       <span

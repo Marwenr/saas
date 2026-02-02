@@ -78,6 +78,13 @@ const purchaseOrderSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    // Total including VAT (TTC)
+    totalAmountVatIncluded: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
     notes: {
       type: String,
       trim: true,

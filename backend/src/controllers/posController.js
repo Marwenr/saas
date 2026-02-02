@@ -197,7 +197,7 @@ export async function createSale(request, reply) {
           await session.endSession();
         }
         return reply.code(400).send({
-          error: `Insufficient stock for product ${product.name || product.sku}. Available: ${currentStock}, Requested: ${totalQtyNeeded}`,
+          error: `Insufficient stock for product ${product.name || product.manufacturerRef}. Available: ${currentStock}, Requested: ${totalQtyNeeded}`,
         });
       }
     }
@@ -271,7 +271,7 @@ export async function createSale(request, reply) {
 
       saleItems.push({
         productId: product._id,
-        sku: product.sku,
+        manufacturerRef: product.manufacturerRef,
         name: product.name,
         qty,
         unitPrice: itemUnitPrice,
@@ -423,7 +423,7 @@ export async function createSale(request, reply) {
             await session.endSession();
           }
           return reply.code(400).send({
-            error: `Limite de crédit dépassée. Limite: ${finance.creditLimit.toFixed(2)} TND, Solde actuel: ${finance.balance.toFixed(2)} TND, Nouveau solde: ${newBalance.toFixed(2)} TND`,
+            error: `Limite de crédit dépassée. Limite: ${finance.creditLimit.toFixed(3)} TND, Solde actuel: ${finance.balance.toFixed(3)} TND, Nouveau solde: ${newBalance.toFixed(3)} TND`,
           });
         }
       } catch (financeError) {
@@ -564,7 +564,7 @@ export async function createSale(request, reply) {
           await session.endSession();
         }
         return reply.code(400).send({
-          error: `Insufficient stock for product ${product.name || product.sku}. Available: ${beforeQty}, Requested: ${totalQty}`,
+          error: `Insufficient stock for product ${product.name || product.manufacturerRef}. Available: ${beforeQty}, Requested: ${totalQty}`,
         });
       }
 
@@ -577,7 +577,7 @@ export async function createSale(request, reply) {
           await session.endSession();
         }
         return reply.code(400).send({
-          error: `Stock calculation error for product ${product.name || product.sku}. Cannot have negative stock.`,
+          error: `Stock calculation error for product ${product.name || product.manufacturerRef}. Cannot have negative stock.`,
         });
       }
 
@@ -593,7 +593,7 @@ export async function createSale(request, reply) {
         quantity: totalQty,
         beforeQty,
         afterQty,
-        reason: `Counter sale - ${product.name || product.sku}`,
+        reason: `Counter sale - ${product.name || product.manufacturerRef}`,
         source: 'sale',
         reference: reference || sale._id.toString(),
         createdBy: new mongoose.Types.ObjectId(request.user.userId),
@@ -618,7 +618,7 @@ export async function createSale(request, reply) {
 
     // Populate sale for response
     await sale.populate('createdBy', 'name email');
-    await sale.populate('items.productId', 'sku name');
+    await sale.populate('items.productId', 'manufacturerRef name');
 
     // IMPORTANT: Update customer financial stats and loyalty status AFTER sale is committed
     // This MUST be done for ALL sales (CASH, CHECK, CREDIT) to update monthlyAveragePurchase
@@ -785,7 +785,7 @@ export async function getSales(request, reply) {
     // Get sales
     const sales = await Sale.find(filter)
       .populate('createdBy', 'name email')
-      .populate('items.productId', 'sku name')
+      .populate('items.productId', 'manufacturerRef name')
       .populate('customerId', 'firstName lastName internalCode')
       .sort({ saleDate: -1, createdAt: -1 })
       .skip(skip)
@@ -833,7 +833,7 @@ export async function getSale(request, reply) {
       ...companyFilter,
     })
       .populate('createdBy', 'name email')
-      .populate('items.productId', 'sku name stockQty')
+      .populate('items.productId', 'manufacturerRef name stockQty')
       .populate('customerId', 'firstName lastName internalCode')
       .populate('returnSaleId', 'reference saleDate totalInclTax')
       .lean();

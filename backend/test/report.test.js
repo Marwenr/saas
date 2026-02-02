@@ -1604,6 +1604,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 1000,
+      totalAmountVatIncluded: 1190,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1626,6 +1627,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 700,
+      totalAmountVatIncluded: 833,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1701,6 +1703,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 600,
+      totalAmountVatIncluded: 714,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1771,6 +1774,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 500,
+      totalAmountVatIncluded: 595,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1794,6 +1798,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 700,
+      totalAmountVatIncluded: 833,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1863,6 +1868,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 600,
+      totalAmountVatIncluded: 714,
       createdBy: testUser._id,
     });
 
@@ -1885,6 +1891,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 700,
+      totalAmountVatIncluded: 833,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });
@@ -1954,6 +1961,7 @@ describe('Sales Products Report - Period Average Purchase Price', () => {
         },
       ],
       totalAmount: 600,
+      totalAmountVatIncluded: 714,
       createdBy: testUser._id,
       receivedBy: testUser._id,
     });

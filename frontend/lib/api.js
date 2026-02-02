@@ -4,8 +4,12 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+// Track if we're currently refreshing to avoid multiple refresh attempts
+let isRefreshing = false;
+let refreshPromise = null;
+
 /**
- * Base fetch wrapper with credentials
+ * Base fetch wrapper with credentials and automatic token refresh
  */
 async function fetchAPI(endpoint, options = {}) {
   const url = `${API_URL}${endpoint}`;
@@ -19,15 +23,59 @@ async function fetchAPI(endpoint, options = {}) {
     credentials: 'include', // Important for cookies
   };
 
-  const response = await fetch(url, config);
+  let response = await fetch(url, config);
+
+  // Helper function to parse response
+  const parseResponse = async res => {
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await res.json();
+    }
+    return {};
+  };
 
   // Try to parse JSON, but handle empty responses
-  let data;
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
-  } else {
-    data = {};
+  let data = await parseResponse(response);
+
+  // If we get a 401 (Unauthorized), try to refresh the token and retry the request
+  if (
+    response.status === 401 &&
+    endpoint !== '/api/auth/refresh' &&
+    endpoint !== '/api/auth/login' &&
+    endpoint !== '/api/auth/register' &&
+    endpoint !== '/api/auth/register-company'
+  ) {
+    // Only attempt refresh once
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = refreshToken().catch(() => {
+        // If refresh fails, clear the promise so we can try again later
+        refreshPromise = null;
+        isRefreshing = false;
+        throw new Error('Session expired. Please login again.');
+      });
+    }
+
+    try {
+      // Wait for the refresh to complete
+      await refreshPromise;
+      isRefreshing = false;
+      refreshPromise = null;
+
+      // Retry the original request
+      response = await fetch(url, config);
+      data = await parseResponse(response);
+    } catch (refreshError) {
+      isRefreshing = false;
+      refreshPromise = null;
+      // If refresh failed, throw the original 401 error
+      const error = new Error(
+        data.error || 'Unauthorized - Please login again'
+      );
+      error.status = 401;
+      error.data = data;
+      throw error;
+    }
   }
 
   if (!response.ok) {

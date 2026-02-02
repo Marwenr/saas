@@ -279,17 +279,17 @@ function SalesPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground text-right">
                           {sale.totalExclTax !== undefined
-                            ? `${sale.totalExclTax.toFixed(2)} TND`
+                            ? `${sale.totalExclTax.toFixed(3)} TND`
                             : '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground text-right">
                           {sale.totalTax !== undefined
-                            ? `${sale.totalTax.toFixed(2)} TND`
+                            ? `${sale.totalTax.toFixed(3)} TND`
                             : '-'}
                         </td>
                         <td className="px-6 py-4 text-sm text-foreground font-semibold text-right">
                           {sale.totalInclTax !== undefined
-                            ? `${sale.totalInclTax.toFixed(2)} TND`
+                            ? `${sale.totalInclTax.toFixed(3)} TND`
                             : '-'}
                         </td>
                         <td

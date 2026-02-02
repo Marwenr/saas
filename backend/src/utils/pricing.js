@@ -3,6 +3,52 @@
  */
 
 /**
+ * Calculate Weighted Average Cost (CMP - Coût Moyen Pondéré)
+ * CMP = (ancienStock × ancienPrix + nouvelAchat × nouveauPrix) / (ancienStock + nouvelAchat)
+ *
+ * @param {Object} params - Parameters for CMP calculation
+ * @param {number} params.oldStock - Existing stock quantity (ancienStock)
+ * @param {number} params.oldPrice - Existing average purchase price (ancienPrix)
+ * @param {number} params.newPurchaseQty - New purchase quantity (nouvelAchat)
+ * @param {number} params.newPurchasePrice - New purchase unit price (nouveauPrix)
+ * @returns {number} Weighted average cost (CMP)
+ */
+export function calculateWeightedAveragePrice({
+  oldStock,
+  oldPrice,
+  newPurchaseQty,
+  newPurchasePrice,
+}) {
+  const oldQty = Number(oldStock) || 0;
+  const oldP = Number(oldPrice) || 0;
+  const newQty = Number(newPurchaseQty) || 0;
+  const newP = Number(newPurchasePrice) || 0;
+
+  // If no new purchase, return old price
+  if (newQty <= 0 || newP <= 0) {
+    return oldP;
+  }
+
+  // If no old stock, return new price
+  if (oldQty <= 0 || oldP <= 0) {
+    return newP;
+  }
+
+  // Calculate weighted average: (oldStock × oldPrice + newQty × newPrice) / (oldStock + newQty)
+  const totalValue = oldQty * oldP + newQty * newP;
+  const totalQty = oldQty + newQty;
+
+  if (totalQty <= 0) {
+    return 0;
+  }
+
+  const weightedAverage = totalValue / totalQty;
+
+  // Round to 3 decimal places for consistency
+  return Math.round(weightedAverage * 1000) / 1000;
+}
+
+/**
  * Calculate recommended sale price using HYBRID pricing mode
  *
  * HYBRID mode ensures:
@@ -59,8 +105,8 @@ export function calculateHybridRecommendedPrice({
   // priceTTC = priceHT * (1 + taxRate / 100)
   const priceTTC = priceHT > 0 ? priceHT * (1 + tax / 100) : 0;
 
-  // Round to 2 decimal places
-  return Math.round(priceTTC * 100) / 100;
+  // Round to 3 decimal places
+  return Math.round(priceTTC * 1000) / 1000;
 }
 
 /**
@@ -77,15 +123,78 @@ export function calculateRecommendedSalePrice(product) {
   const pricingMode = product.pricingMode || 'HYBRID';
 
   if (pricingMode === 'HYBRID') {
+    // Use nullish coalescing to preserve 0 values (only use defaults for null/undefined)
+    const avgCost = product.purchasePrice ?? 0;
+    const lastCost = product.lastPurchasePrice ?? 0;
+    const targetMargin = product.marginRate ?? 20;
+    const minMarginOnLast = product.minMarginOnLastPurchase ?? 10;
+    const taxRate = product.taxRate ?? 0; // Default to 0 for tax, not 19
+
     return calculateHybridRecommendedPrice({
-      avgCost: product.purchasePrice || 0,
-      lastCost: product.lastPurchasePrice || 0,
-      targetMargin: product.marginRate || 20,
-      minMarginOnLast: product.minMarginOnLastPurchase || 10,
-      taxRate: product.taxRate || 19,
+      avgCost,
+      lastCost,
+      targetMargin,
+      minMarginOnLast,
+      taxRate,
     });
   }
 
   // Default fallback: if no pricing mode matches, return current sale price or 0
   return product.salePrice || 0;
+}
+
+/**
+ * Decompose product pricing to show all details
+ * Returns: lastPurchasePrice, CMP (purchasePrice), priceHT, priceWithoutMargin, marginRate, taxRate
+ *
+ * @param {Object} product - Product document or object with pricing fields
+ * @returns {Object} Decomposed pricing details
+ */
+export function decomposeProductPricing(product) {
+  if (!product) {
+    return {
+      lastPurchasePrice: 0,
+      cmpPrice: 0,
+      priceHT: 0,
+      priceWithoutMargin: 0,
+      marginRate: 0,
+      taxRate: 0,
+      salePriceTTC: 0,
+      marginAmount: 0,
+      taxAmount: 0,
+    };
+  }
+
+  const salePriceTTC = Number(product.salePrice) || 0;
+  const taxRate = Number(product.taxRate) || 0;
+  const marginRate = Number(product.marginRate) || 0;
+  const cmpPrice = Number(product.purchasePrice) || 0;
+  const lastPurchasePrice = Number(product.lastPurchasePrice) || 0;
+
+  // Calculate price HT (without tax): priceHT = salePriceTTC / (1 + taxRate/100)
+  let priceHT = 0;
+  if (salePriceTTC > 0 && taxRate >= 0) {
+    priceHT = salePriceTTC / (1 + taxRate / 100);
+  }
+
+  // Price without margin = CMP (purchasePrice)
+  const priceWithoutMargin = cmpPrice;
+
+  // Calculate margin amount: priceHT - priceWithoutMargin
+  const marginAmount = priceHT - priceWithoutMargin;
+
+  // Calculate tax amount: salePriceTTC - priceHT
+  const taxAmount = salePriceTTC - priceHT;
+
+  return {
+    lastPurchasePrice: Math.round(lastPurchasePrice * 1000) / 1000,
+    cmpPrice: Math.round(cmpPrice * 1000) / 1000,
+    priceHT: Math.round(priceHT * 1000) / 1000,
+    priceWithoutMargin: Math.round(priceWithoutMargin * 1000) / 1000,
+    marginRate: Math.round(marginRate * 1000) / 1000,
+    taxRate: Math.round(taxRate * 1000) / 1000,
+    salePriceTTC: Math.round(salePriceTTC * 1000) / 1000,
+    marginAmount: Math.round(marginAmount * 1000) / 1000,
+    taxAmount: Math.round(taxAmount * 1000) / 1000,
+  };
 }

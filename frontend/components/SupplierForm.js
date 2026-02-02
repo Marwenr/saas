@@ -38,7 +38,12 @@ import { Checkbox } from './ui/checkbox';
 /**
  * SupplierForm component - Modal form for creating/editing suppliers
  */
-export default function SupplierForm({ supplier, onClose, open = true }) {
+export default function SupplierForm({
+  supplier,
+  onClose,
+  onCreated,
+  open = true,
+}) {
   const isEditing = !!supplier;
   const { toast } = useToast();
   const [error, setError] = useState(null);
@@ -111,15 +116,21 @@ export default function SupplierForm({ supplier, onClose, open = true }) {
           title: 'Supplier updated',
           description: `Supplier "${payload.name}" has been updated successfully.`,
         });
+        onClose();
       } else {
-        await createSupplier(payload);
+        const response = await createSupplier(payload);
+        const createdSupplier = response.supplier;
         toast({
           title: 'Supplier created',
           description: `Supplier "${payload.name}" has been created successfully.`,
         });
+        // Call onCreated callback if provided, otherwise just close
+        if (onCreated && createdSupplier) {
+          onCreated(createdSupplier);
+        } else {
+          onClose();
+        }
       }
-
-      onClose();
     } catch (err) {
       console.error('Failed to save supplier:', err);
       setError(err.message || "Échec de l'enregistrement du fournisseur");

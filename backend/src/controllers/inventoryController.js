@@ -60,7 +60,7 @@ export async function getStockMovements(request, reply) {
 
     // Get movements
     const movements = await StockMovement.find(filter)
-      .populate('productId', 'sku name')
+      .populate('productId', 'manufacturerRef name')
       .populate('createdBy', 'name email')
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -210,7 +210,7 @@ export async function createStockMovement(request, reply) {
     await product.save();
 
     // Populate movement for response
-    await movement.populate('productId', 'sku name');
+    await movement.populate('productId', 'manufacturerRef name');
     await movement.populate('createdBy', 'name email');
 
     return reply.code(201).send({

@@ -5,11 +5,14 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
 import AuthGuard from '../../../components/AuthGuard';
+import { Button } from '../../../components/ui/button';
+import { Badge } from '../../../components/ui/badge';
 import { useAuth } from '../../../lib/useAuth';
 import {
   fetchPurchaseOrder,
   receivePurchaseOrder,
 } from '../../../lib/purchases';
+import { Loader2 } from 'lucide-react';
 
 /**
  * Purchase Order Detail page - Détail du bon de commande et réception
@@ -122,35 +125,29 @@ function PurchaseOrderDetailPage() {
     const statusMap = {
       DRAFT: {
         label: 'Brouillon',
-        className:
-          'bg-gray-100 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400',
+        variant: 'secondary',
       },
       PENDING: {
         label: 'En attente',
-        className:
-          'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400',
+        variant: 'warning',
       },
       PARTIAL: {
         label: 'Partiel',
-        className:
-          'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400',
+        variant: 'info',
       },
       RECEIVED: {
         label: 'Reçu',
-        className:
-          'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
+        variant: 'success',
       },
       CANCELLED: {
         label: 'Annulé',
-        className:
-          'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400',
+        variant: 'destructive',
       },
     };
     return (
       statusMap[status] || {
         label: status,
-        className:
-          'bg-gray-100 dark:bg-gray-900/20 text-gray-700 dark:text-gray-400',
+        variant: 'secondary',
       }
     );
   };
@@ -175,10 +172,36 @@ function PurchaseOrderDetailPage() {
     return Object.values(receiptQuantities).some(qty => qty > 0);
   };
 
+  const calculateSubTotal = () => {
+    if (!purchaseOrder?.items) return 0;
+    return purchaseOrder.items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unitPrice) || 0;
+      return sum + qty * price;
+    }, 0);
+  };
+
+  const calculateTax = () => {
+    if (!purchaseOrder?.items) return 0;
+    return purchaseOrder.items.reduce((sum, item) => {
+      const qty = parseFloat(item.quantity) || 0;
+      const price = parseFloat(item.unitPrice) || 0;
+      const taxRate = parseFloat(item.taxRate) || 0;
+      return sum + qty * price * (taxRate / 100);
+    }, 0);
+  };
+
+  const calculateTotalWithTax = () => {
+    return calculateSubTotal() + calculateTax();
+  };
+
   if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-[var(--text-secondary)]">Loading...</div>
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="text-muted-foreground">Loading...</div>
+        </div>
       </div>
     );
   }
@@ -187,15 +210,12 @@ function PurchaseOrderDetailPage() {
     return (
       <div className="py-8">
         <div className="text-center py-12">
-          <div className="text-[var(--text-secondary)]">
+          <div className="text-muted-foreground">
             Bon de commande non trouvé
           </div>
-          <Link
-            href="/purchases"
-            className="mt-4 inline-block px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            Retour à la liste
-          </Link>
+          <Button asChild className="mt-4">
+            <Link href="/purchases">Retour à la liste</Link>
+          </Button>
         </div>
       </div>
     );
@@ -208,61 +228,52 @@ function PurchaseOrderDetailPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-4xl font-bold text-[var(--text-primary)]">
+          <h1 className="text-4xl font-bold text-foreground mb-2 tracking-tight">
             Bon de commande {purchaseOrder.orderNumber}
           </h1>
-          <Link
-            href="/purchases"
-            className="px-4 py-2 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
-          >
-            Retour
-          </Link>
+          <Button asChild variant="outline">
+            <Link href="/purchases">Retour</Link>
+          </Button>
         </div>
         <div className="flex items-center gap-4">
-          <span
-            className={`inline-block px-3 py-1 rounded text-sm font-medium ${status.className}`}
-          >
-            {status.label}
-          </span>
+          <Badge variant={status.variant}>{status.label}</Badge>
         </div>
       </div>
 
       {/* Error message */}
       {error && (
-        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400">
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-700 rounded-xl text-red-700 dark:text-red-400 shadow-sm">
           {error}
         </div>
       )}
 
       {/* Purchase Order Info */}
-      <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
-        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
+      <div className="mb-6 p-6 border border-border rounded-xl bg-card shadow-sm">
+        <h2 className="text-xl font-semibold text-foreground mb-4">
           Informations générales
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <div className="text-sm text-[var(--text-secondary)] mb-1">
+            <div className="text-sm text-muted-foreground mb-1">
               Fournisseur
             </div>
-            <div className="text-[var(--text-primary)] font-medium">
+            <div className="text-foreground font-medium">
               {purchaseOrder.supplierId?.name || '-'}
             </div>
             {purchaseOrder.supplierId?.email && (
-              <div className="text-sm text-[var(--text-secondary)]">
+              <div className="text-sm text-muted-foreground">
                 {purchaseOrder.supplierId.email}
               </div>
             )}
             {purchaseOrder.supplierId?.phone && (
-              <div className="text-sm text-[var(--text-secondary)]">
+              <div className="text-sm text-muted-foreground">
                 {purchaseOrder.supplierId.phone}
               </div>
             )}
           </div>
           <div>
-            <div className="text-sm text-[var(--text-secondary)] mb-1">
-              Dates
-            </div>
-            <div className="text-[var(--text-primary)]">
+            <div className="text-sm text-muted-foreground mb-1">Dates</div>
+            <div className="text-foreground">
               <div>Date de commande: {formatDate(purchaseOrder.orderDate)}</div>
               {purchaseOrder.expectedDate && (
                 <div>Date prévue: {formatDate(purchaseOrder.expectedDate)}</div>
@@ -277,55 +288,52 @@ function PurchaseOrderDetailPage() {
         </div>
         {purchaseOrder.notes && (
           <div className="mt-4">
-            <div className="text-sm text-[var(--text-secondary)] mb-1">
-              Notes
-            </div>
-            <div className="text-[var(--text-primary)]">
-              {purchaseOrder.notes}
-            </div>
+            <div className="text-sm text-muted-foreground mb-1">Notes</div>
+            <div className="text-foreground">{purchaseOrder.notes}</div>
           </div>
         )}
       </div>
 
       {/* Items */}
-      <div className="mb-6 p-6 border border-[var(--border-color)] rounded-lg bg-[var(--bg-secondary)]">
-        <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-4">
-          Produits
-        </h2>
+      <div className="mb-6 p-6 border border-border rounded-xl bg-card shadow-sm">
+        <h2 className="text-xl font-semibold text-foreground mb-4">Produits</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b border-[var(--border-color)]">
-                <th className="px-4 py-3 text-left text-sm font-semibold text-[var(--text-primary)]">
+              <tr className="border-b border-border bg-muted/30">
+                <th className="px-4 py-3 text-left text-sm font-semibold text-foreground">
                   Produit
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   Quantité commandée
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   Quantité reçue
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   Restant
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   Prix unitaire
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   TVA (%)
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                   Sous-total
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
+                  Total
                 </th>
                 {purchaseOrder.status !== 'RECEIVED' &&
                   purchaseOrder.status !== 'CANCELLED' && (
-                    <th className="px-4 py-3 text-right text-sm font-semibold text-[var(--text-primary)]">
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-foreground">
                       Quantité à recevoir
                     </th>
                   )}
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-border">
               {purchaseOrder.items?.map((item, index) => {
                 const remaining = item.quantity - (item.receivedQuantity || 0);
                 const canReceiveItem =
@@ -336,31 +344,42 @@ function PurchaseOrderDetailPage() {
                 return (
                   <tr
                     key={index}
-                    className="border-b border-[var(--border-color)]"
+                    className="hover:bg-muted/50 transition-colors"
                   >
-                    <td className="px-4 py-3 text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-foreground">
                       <div className="font-medium">
-                        {item.productId?.sku || '-'} -{' '}
+                        {item.productId?.manufacturerRef || '-'} -{' '}
                         {item.productId?.name || '-'}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {item.quantity}
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {item.receivedQuantity || 0}
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)] font-medium">
+                    <td className="px-4 py-3 text-right text-foreground font-medium">
                       {remaining}
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)]">
-                      {item.unitPrice?.toFixed(2) || '0.00'} TND
+                    <td className="px-4 py-3 text-right text-foreground">
+                      {item.unitPrice?.toFixed(3) || '0.00'} TND
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)]">
+                    <td className="px-4 py-3 text-right text-foreground">
                       {item.taxRate || 0}%
                     </td>
-                    <td className="px-4 py-3 text-right text-[var(--text-primary)] font-medium">
-                      {item.subtotal?.toFixed(2) || '0.00'} TND
+                    <td className="px-4 py-3 text-right text-foreground font-medium">
+                      {((item.quantity || 0) * (item.unitPrice || 0)).toFixed(
+                        3
+                      )}{' '}
+                      TND
+                    </td>
+                    <td className="px-4 py-3 text-right text-foreground font-bold">
+                      {(
+                        (item.quantity || 0) *
+                        (item.unitPrice || 0) *
+                        (1 + (item.taxRate || 0) / 100)
+                      ).toFixed(3)}{' '}
+                      TND
                     </td>
                     {canReceiveItem && (
                       <td className="px-4 py-3">
@@ -373,7 +392,7 @@ function PurchaseOrderDetailPage() {
                           onChange={e =>
                             handleReceiptQuantityChange(index, e.target.value)
                           }
-                          className="w-full px-2 py-1 border border-[var(--border-color)] rounded bg-[var(--bg-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500 text-right"
+                          className="w-full px-3 py-2 border border-input rounded-xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all text-right"
                           placeholder="0"
                         />
                       </td>
@@ -381,7 +400,7 @@ function PurchaseOrderDetailPage() {
                     {!canReceiveItem &&
                       purchaseOrder.status !== 'RECEIVED' &&
                       purchaseOrder.status !== 'CANCELLED' && (
-                        <td className="px-4 py-3 text-center text-[var(--text-secondary)]">
+                        <td className="px-4 py-3 text-center text-muted-foreground">
                           -
                         </td>
                       )}
@@ -390,20 +409,56 @@ function PurchaseOrderDetailPage() {
               })}
             </tbody>
             <tfoot>
+              <tr className="border-t border-border">
+                <td
+                  colSpan={
+                    purchaseOrder.status === 'RECEIVED' ||
+                    purchaseOrder.status === 'CANCELLED'
+                      ? 7
+                      : 8
+                  }
+                  className="px-4 py-3 text-right font-semibold text-foreground"
+                >
+                  Total:
+                </td>
+                <td className="px-4 py-3 text-right font-semibold text-foreground">
+                  {calculateSubTotal().toFixed(3)} TND
+                </td>
+                {purchaseOrder.status !== 'RECEIVED' &&
+                  purchaseOrder.status !== 'CANCELLED' && <td></td>}
+              </tr>
               <tr>
                 <td
                   colSpan={
                     purchaseOrder.status === 'RECEIVED' ||
                     purchaseOrder.status === 'CANCELLED'
-                      ? 6
-                      : 7
+                      ? 7
+                      : 8
                   }
-                  className="px-4 py-3 text-right font-semibold text-[var(--text-primary)]"
+                  className="px-4 py-3 text-right font-semibold text-foreground"
                 >
-                  Total:
+                  Tax:
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-[var(--text-primary)]">
-                  {purchaseOrder.totalAmount?.toFixed(2) || '0.00'} TND
+                <td className="px-4 py-3 text-right font-semibold text-foreground">
+                  {calculateTax().toFixed(3)} TND
+                </td>
+                {purchaseOrder.status !== 'RECEIVED' &&
+                  purchaseOrder.status !== 'CANCELLED' && <td></td>}
+              </tr>
+              <tr className="border-t-2 border-border">
+                <td
+                  colSpan={
+                    purchaseOrder.status === 'RECEIVED' ||
+                    purchaseOrder.status === 'CANCELLED'
+                      ? 7
+                      : 8
+                  }
+                  className="px-4 py-3 text-right font-bold text-foreground"
+                >
+                  Total incluant tax:
+                </td>
+                <td className="px-4 py-3 text-right font-bold text-foreground">
+                  {calculateTotalWithTax().toFixed(3)} TND
                 </td>
                 {purchaseOrder.status !== 'RECEIVED' &&
                   purchaseOrder.status !== 'CANCELLED' && <td></td>}
@@ -417,13 +472,20 @@ function PurchaseOrderDetailPage() {
       {purchaseOrder.status !== 'RECEIVED' &&
         purchaseOrder.status !== 'CANCELLED' && (
           <div className="flex justify-end">
-            <button
+            <Button
               onClick={handleReceive}
               disabled={receiving || !canReceive()}
-              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="bg-green-600 hover:bg-green-700 text-white"
             >
-              {receiving ? 'Réception en cours...' : 'Recevoir les produits'}
-            </button>
+              {receiving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Réception en cours...
+                </>
+              ) : (
+                'Recevoir les produits'
+              )}
+            </Button>
           </div>
         )}
     </div>

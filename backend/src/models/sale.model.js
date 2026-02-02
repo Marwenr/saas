@@ -10,7 +10,7 @@ const saleItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: true,
     },
-    sku: {
+    manufacturerRef: {
       type: String,
       trim: true,
     },

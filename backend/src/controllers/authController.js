@@ -39,7 +39,7 @@ export async function register(request, reply) {
         companyId: user.companyId ? user.companyId.toString() : null,
         role: user.role || 'owner',
       },
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     const refreshToken = request.server.jwt.sign(
@@ -57,7 +57,7 @@ export async function register(request, reply) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });
 
@@ -219,7 +219,7 @@ export async function refresh(request, reply) {
         companyId: user.companyId ? user.companyId.toString() : null,
         role: user.role || 'owner',
       },
-      { expiresIn: '15m' }
+      { expiresIn: '24h' }
     );
 
     // Set new access token cookie
@@ -229,7 +229,7 @@ export async function refresh(request, reply) {
       httpOnly: true,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'strict',
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 24 * 60 * 60, // 24 hours
       path: '/',
     });
 

@@ -267,7 +267,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Produit</TableHead>
-                            <TableHead>SKU</TableHead>
+                            <TableHead>Réf. fabricant</TableHead>
                             <TableHead className="text-center">Qté</TableHead>
                             <TableHead className="text-right">
                               Prix avant remise
@@ -304,13 +304,15 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                                   {item.name || '-'}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">
-                                  {item.sku || product?.sku || '-'}
+                                  {item.manufacturerRef ||
+                                    product?.manufacturerRef ||
+                                    '-'}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   {item.qty || 0}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {baseUnitPrice.toFixed(2)} TND
+                                  {baseUnitPrice.toFixed(3)} TND
                                 </TableCell>
                                 <TableCell className="text-center">
                                   {hasDiscount ? (
@@ -329,20 +331,20 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                                 <TableCell className="text-right">
                                   {hasDiscount ? (
                                     <span className="text-green-600 font-medium">
-                                      {finalUnitPrice.toFixed(2)} TND
+                                      {finalUnitPrice.toFixed(3)} TND
                                     </span>
                                   ) : (
-                                    <span>{finalUnitPrice.toFixed(2)} TND</span>
+                                    <span>{finalUnitPrice.toFixed(3)} TND</span>
                                   )}
                                 </TableCell>
                                 <TableCell className="text-center">
                                   {item.taxRate || 0}%
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {item.totalExclTax?.toFixed(2) || '0.00'} TND
+                                  {item.totalExclTax?.toFixed(3) || '0.00'} TND
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
-                                  {item.totalInclTax?.toFixed(2) || '0.00'} TND
+                                  {item.totalInclTax?.toFixed(3) || '0.00'} TND
                                 </TableCell>
                               </TableRow>
                             );
@@ -357,7 +359,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                               Sous-total HT:
                             </TableCell>
                             <TableCell className="text-right font-semibold">
-                              {sale.totalExclTax?.toFixed(2) || '0.00'} TND
+                              {sale.totalExclTax?.toFixed(3) || '0.00'} TND
                             </TableCell>
                             <TableCell></TableCell>
                           </TableRow>
@@ -369,7 +371,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                               TVA:
                             </TableCell>
                             <TableCell className="text-right font-semibold">
-                              {sale.totalTax?.toFixed(2) || '0.00'} TND
+                              {sale.totalTax?.toFixed(3) || '0.00'} TND
                             </TableCell>
                             <TableCell></TableCell>
                           </TableRow>
@@ -385,7 +387,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                               </TableCell>
                               <TableCell className="text-right font-semibold text-green-600">
                                 -
-                                {sale.loyaltyDiscountAmount?.toFixed(2) ||
+                                {sale.loyaltyDiscountAmount?.toFixed(3) ||
                                   '0.00'}{' '}
                                 TND
                               </TableCell>
@@ -400,7 +402,7 @@ export default function SaleDetailModal({ saleId, isOpen, onClose }) {
                               Total TTC:
                             </TableCell>
                             <TableCell className="text-right text-base font-bold">
-                              {sale.totalInclTax?.toFixed(2) || '0.00'} TND
+                              {sale.totalInclTax?.toFixed(3) || '0.00'} TND
                             </TableCell>
                             <TableCell></TableCell>
                           </TableRow>

@@ -38,8 +38,10 @@ export default function ProductForm({
   onClose,
   onCreated,
   open = true,
+  queueInfo = null, // { current: 1, total: 3 } for showing progress
 }) {
-  const isEditing = !!product;
+  // If product has an _id or id, it's editing, otherwise it's creation with initial data
+  const isEditing = !!(product && (product._id || product.id));
   const { toast } = useToast();
   const [error, setError] = useState(null);
   const [brandSuggestions, setBrandSuggestions] = useState([]);
@@ -50,7 +52,7 @@ export default function ProductForm({
 
   const form = useForm({
     defaultValues: {
-      sku: '',
+      manufacturerRef: '',
       name: '',
       brand: '',
       brandId: null,
@@ -60,8 +62,8 @@ export default function ProductForm({
       description: '',
       oemRefs: '',
       purchasePrice: '',
-      taxRate: '19.00',
-      marginRate: '20.00',
+      taxRate: '0.00', // Default to 0, not 19
+      marginRate: '40.00',
       isActive: true,
     },
   });
@@ -69,9 +71,45 @@ export default function ProductForm({
   const purchasePrice = form.watch('purchasePrice');
   const marginRate = form.watch('marginRate');
   const taxRate = form.watch('taxRate');
+  const salePrice = form.watch('salePrice');
   const brand = form.watch('brand');
 
-  // Load product data if editing
+  // Function to recalculate sale price - use form.getValues to get latest values
+  const recalculateSalePrice = () => {
+    const purchaseValue = form.getValues('purchasePrice');
+    const marginValue = form.getValues('marginRate');
+    const taxValue = form.getValues('taxRate');
+
+    // Use nullish coalescing to only use defaults if value is null/undefined, not if it's 0
+    const purchase =
+      purchaseValue !== '' &&
+      purchaseValue !== null &&
+      purchaseValue !== undefined
+        ? parseFloat(purchaseValue)
+        : 0;
+    const margin =
+      marginValue !== '' && marginValue !== null && marginValue !== undefined
+        ? parseFloat(marginValue)
+        : 0;
+    const tax =
+      taxValue !== '' && taxValue !== null && taxValue !== undefined
+        ? parseFloat(taxValue)
+        : 0;
+
+    if (purchase > 0 && !isNaN(purchase)) {
+      // Calculate price HT: purchasePrice * (1 + marginRate/100)
+      const priceHT = purchase * (1 + margin / 100);
+      // Calculate price TTC: priceHT * (1 + taxRate/100)
+      const priceTTC = priceHT * (1 + tax / 100);
+
+      // Always update salePrice automatically - never set to 0
+      if (priceTTC > 0 && !isNaN(priceTTC)) {
+        form.setValue('salePrice', priceTTC.toFixed(3), { shouldDirty: false });
+      }
+    }
+  };
+
+  // Load product data if editing or if initial data is provided
   useEffect(() => {
     if (product) {
       const oemRefsString =
@@ -80,7 +118,7 @@ export default function ProductForm({
           : '';
 
       form.reset({
-        sku: product.sku || '',
+        manufacturerRef: product.manufacturerRef || '',
         name: product.name || '',
         brand: product.brand?.name || product.brand || '',
         brandId: product.brand?._id || product.brand || null,
@@ -88,22 +126,22 @@ export default function ProductForm({
         category: product.category || '',
         salePrice:
           product.salePrice !== undefined && product.salePrice !== null
-            ? parseFloat(product.salePrice).toFixed(2)
+            ? parseFloat(product.salePrice).toFixed(3)
             : '',
         description: product.description || '',
         oemRefs: oemRefsString,
         purchasePrice:
           product.purchasePrice !== undefined && product.purchasePrice !== null
-            ? parseFloat(product.purchasePrice).toFixed(2)
+            ? parseFloat(product.purchasePrice).toFixed(3)
             : '',
         taxRate:
           product.taxRate !== undefined && product.taxRate !== null
-            ? parseFloat(product.taxRate).toFixed(2)
-            : '19.00',
+            ? parseFloat(product.taxRate).toFixed(3)
+            : '0.000', // Default to 0, not 19
         marginRate:
           product.marginRate !== undefined && product.marginRate !== null
-            ? parseFloat(product.marginRate).toFixed(2)
-            : '20.00',
+            ? parseFloat(product.marginRate).toFixed(3)
+            : '40.000',
         isActive: product.isActive !== undefined ? product.isActive : true,
       });
     }
@@ -142,21 +180,13 @@ export default function ProductForm({
     return () => clearTimeout(debounceTimer);
   }, [brandSearchTerm]);
 
-  // Auto-calculate salePrice
+  // Auto-calculate salePrice whenever purchasePrice, marginRate, or taxRate changes
   useEffect(() => {
-    const purchase = parseFloat(purchasePrice) || 0;
-    const margin = parseFloat(marginRate) || 0;
-    const tax = parseFloat(taxRate) || 19;
-
-    if (purchase > 0 && !isNaN(purchase)) {
-      const priceHT =
-        purchase > 0 && margin > 0 ? purchase * (1 + margin / 100) : purchase;
-      const priceTTC = priceHT > 0 ? priceHT * (1 + tax / 100) : 0;
-
-      if (priceTTC > 0) {
-        form.setValue('salePrice', priceTTC.toFixed(2), { shouldDirty: false });
-      }
-    }
+    // Small delay to ensure form values are updated
+    const timer = setTimeout(() => {
+      recalculateSalePrice();
+    }, 50);
+    return () => clearTimeout(timer);
   }, [purchasePrice, marginRate, taxRate, form]);
 
   const handleBrandChange = value => {
@@ -196,51 +226,65 @@ export default function ProductForm({
       const brandPayload = data.brandId || data.brand.trim() || undefined;
 
       const payload = {
-        sku: data.sku.trim(),
+        manufacturerRef: data.manufacturerRef.trim(),
         name: data.name.trim(),
         brand: brandPayload,
         manufacturerRef: data.manufacturerRef.trim() || undefined,
         category: data.category.trim() || undefined,
-        salePrice: parseFloat(data.salePrice),
+        // Do NOT send salePrice - it will be calculated on-the-fly from purchasePrice, marginRate, and taxRate
         description: data.description.trim() || undefined,
         oemRefs: data.oemRefs.trim() || undefined,
         purchasePrice: data.purchasePrice
           ? parseFloat(data.purchasePrice)
           : undefined,
-        taxRate: data.taxRate ? parseFloat(data.taxRate) : 19,
+        taxRate:
+          data.taxRate !== undefined &&
+          data.taxRate !== null &&
+          data.taxRate !== ''
+            ? parseFloat(data.taxRate)
+            : 0, // Default to 0, not 19
         marginRate: data.marginRate ? parseFloat(data.marginRate) : 20,
         isActive: data.isActive,
       };
 
       if (
-        !payload.sku ||
+        !payload.manufacturerRef ||
         !payload.name ||
-        isNaN(payload.salePrice) ||
-        payload.salePrice < 0
+        !payload.purchasePrice ||
+        payload.purchasePrice <= 0
       ) {
-        throw new Error('SKU, nom et prix de vente sont obligatoires');
+        throw new Error(
+          "manufacturerRef, nom et prix d'achat sont obligatoires"
+        );
       }
 
       let result;
       if (isEditing) {
         await updateProduct(product._id || product.id, payload);
         toast({
-          title: 'Product updated',
-          description: `Product "${payload.name}" has been updated successfully.`,
+          title: 'Produit mis à jour',
+          description: `Le produit "${payload.name}" a été mis à jour avec succès.`,
         });
+        onClose();
       } else {
         result = await createProduct(payload);
         const createdProduct = result.product || result;
         toast({
-          title: 'Product created',
-          description: `Product "${createdProduct.name}" has been created successfully.`,
+          title: 'Produit créé',
+          description: `Le produit "${createdProduct.name}" a été créé avec succès.`,
         });
+
+        // Call onCreated callback first
         if (onCreated) {
           onCreated(createdProduct);
         }
-      }
 
-      onClose();
+        // Only close if not in queue mode or if it's the last product
+        // In queue mode, onCreated will handle moving to next product
+        if (!queueInfo || queueInfo.current >= queueInfo.total) {
+          onClose();
+        }
+      }
     } catch (err) {
       console.error('Failed to save product:', err);
       setError(err.message || "Échec de l'enregistrement du produit");
@@ -252,12 +296,18 @@ export default function ProductForm({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Modifier la pièce' : 'Ajouter une pièce'}
+            {isEditing
+              ? 'Modifier la pièce'
+              : queueInfo
+                ? `Créer un nouveau produit (${queueInfo.current}/${queueInfo.total})`
+                : 'Ajouter une pièce'}
           </DialogTitle>
           <DialogDescription>
             {isEditing
               ? 'Modifiez les informations du produit'
-              : 'Créez un nouveau produit avec les informations requises'}
+              : queueInfo
+                ? `Produit détecté depuis la facture. Complétez les informations manquantes. (${queueInfo.current}/${queueInfo.total})`
+                : 'Créez un nouveau produit avec les informations requises'}
           </DialogDescription>
         </DialogHeader>
 
@@ -277,15 +327,24 @@ export default function ProductForm({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="sku"
-                    rules={{ required: 'SKU is required' }}
+                    name="manufacturerRef"
+                    rules={{ required: 'manufacturerRef is required' }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          SKU <span className="text-destructive">*</span>
+                          Référence fabricant{' '}
+                          <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="SKU-001" {...field} />
+                          <Input
+                            placeholder="REF-001"
+                            {...field}
+                            onBlur={() => {
+                              field.onBlur();
+                              // Recalculate salePrice after any field change
+                              recalculateSalePrice();
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -302,7 +361,15 @@ export default function ProductForm({
                           Nom <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="Nom du produit" {...field} />
+                          <Input
+                            placeholder="Nom du produit"
+                            {...field}
+                            onBlur={() => {
+                              field.onBlur();
+                              // Recalculate salePrice after any field change
+                              recalculateSalePrice();
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -453,8 +520,12 @@ export default function ProductForm({
                               type="number"
                               placeholder="0.00"
                               min="0"
-                              step="0.01"
+                              step="0.001"
                               {...field}
+                              onBlur={() => {
+                                field.onBlur();
+                                recalculateSalePrice();
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -478,7 +549,7 @@ export default function ProductForm({
                               type="number"
                               placeholder="20"
                               min="0"
-                              step="0.01"
+                              step="0.001"
                               {...field}
                             />
                           </FormControl>
@@ -505,14 +576,25 @@ export default function ProductForm({
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="0.00"
+                              placeholder="0.000"
                               min="0"
-                              step="0.01"
+                              step="0.001"
                               {...field}
+                              value={field.value || ''}
+                              onChange={e => {
+                                // Allow manual entry
+                                field.onChange(e);
+                              }}
+                              onBlur={e => {
+                                field.onBlur(e);
+                                // Always recalculate on blur to ensure it's never 0
+                                recalculateSalePrice();
+                              }}
                             />
                           </FormControl>
                           <FormDescription>
-                            (calculé automatiquement avec TVA)
+                            (calculé automatiquement - se met à jour après
+                            chaque modification)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -531,8 +613,12 @@ export default function ProductForm({
                               placeholder="0"
                               min="0"
                               max="100"
-                              step="0.01"
+                              step="0.001"
                               {...field}
+                              onBlur={() => {
+                                field.onBlur();
+                                recalculateSalePrice();
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -559,6 +645,122 @@ export default function ProductForm({
                     </FormItem>
                   )}
                 />
+
+                {/* Detailed Pricing Information */}
+                <div className="mt-6 p-4 border border-border rounded-lg bg-muted/30">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Détails des prix
+                  </h3>
+                  {(() => {
+                    const purchase = parseFloat(purchasePrice) || 0;
+                    const margin = parseFloat(marginRate) || 0;
+                    const tax = parseFloat(taxRate) || 0;
+                    const sale = parseFloat(salePrice) || 0;
+                    // Use lastPurchasePrice if available (when editing), otherwise use purchasePrice
+                    const lastPurchase = product?.lastPurchasePrice
+                      ? parseFloat(product.lastPurchasePrice)
+                      : purchase;
+
+                    // Calculate price HT (without tax): priceHT = salePriceTTC / (1 + taxRate/100)
+                    let priceHT = 0;
+                    if (sale > 0 && tax >= 0) {
+                      priceHT = sale / (1 + tax / 100);
+                    }
+
+                    // Price without margin = purchasePrice (CMP)
+                    const priceWithoutMargin = purchase;
+
+                    // Calculate margin amount: priceHT - priceWithoutMargin
+                    const marginAmount = priceHT - priceWithoutMargin;
+
+                    // Calculate tax amount: salePriceTTC - priceHT
+                    const taxAmount = sale - priceHT;
+
+                    const formatPrice = val => {
+                      if (
+                        val === undefined ||
+                        val === null ||
+                        isNaN(val) ||
+                        val < 0
+                      )
+                        return '0.000';
+                      return (Math.round(val * 1000) / 1000).toFixed(3);
+                    };
+
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Dernier prix acheté (HT)
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(lastPurchase)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Prix après CMP (Coût Moyen Pondéré)
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(purchase)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Prix sans marge de gain
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(priceWithoutMargin)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Prix HT (sans taxe)
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(priceHT)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Marge de gain
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(margin)}%
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Montant: {formatPrice(marginAmount)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-card">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Taux de TVA
+                          </div>
+                          <div className="text-sm font-semibold text-foreground">
+                            {formatPrice(tax)}%
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            Montant: {formatPrice(taxAmount)} TND
+                          </div>
+                        </div>
+                        <div className="p-3 border border-border rounded-lg bg-primary/10 col-span-full md:col-span-2 lg:col-span-3">
+                          <div className="text-xs text-muted-foreground mb-1">
+                            Prix de vente TTC
+                          </div>
+                          <div className="text-lg font-bold text-foreground">
+                            {formatPrice(sale)} TND
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-2">
+                            = {formatPrice(priceWithoutMargin)} TND (CMP) +{' '}
+                            {formatPrice(marginAmount)} TND (Marge{' '}
+                            {formatPrice(margin)}%) + {formatPrice(taxAmount)}{' '}
+                            TND (TVA {formatPrice(tax)}%)
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
               </div>
             </ScrollArea>
 
@@ -571,7 +773,9 @@ export default function ProductForm({
                   ? 'Enregistrement...'
                   : isEditing
                     ? 'Mettre à jour'
-                    : 'Créer'}
+                    : queueInfo && queueInfo.current < queueInfo.total
+                      ? 'Suivante'
+                      : 'Créer'}
               </Button>
             </DialogFooter>
           </form>

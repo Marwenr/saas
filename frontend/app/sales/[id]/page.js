@@ -276,7 +276,7 @@ function SaleDetailInner() {
                     Produit
                   </th>
                   <th className="px-3 py-2 text-left text-sm font-semibold text-[var(--text-primary)]">
-                    SKU
+                    Réf. fabricant
                   </th>
                   <th className="px-3 py-2 text-center text-sm font-semibold text-[var(--text-primary)]">
                     Quantité
@@ -307,22 +307,24 @@ function SaleDetailInner() {
                         <div className="font-medium">{item.name || '-'}</div>
                       </td>
                       <td className="px-3 py-2 text-sm text-[var(--text-secondary)]">
-                        {item.sku || product?.sku || '-'}
+                        {item.manufacturerRef ||
+                          product?.manufacturerRef ||
+                          '-'}
                       </td>
                       <td className="px-3 py-2 text-sm text-center text-[var(--text-primary)]">
                         {item.qty || 0}
                       </td>
                       <td className="px-3 py-2 text-sm text-right text-[var(--text-primary)]">
-                        {item.unitPrice?.toFixed(2) || '0.00'} TND
+                        {item.unitPrice?.toFixed(3) || '0.00'} TND
                       </td>
                       <td className="px-3 py-2 text-sm text-center text-[var(--text-primary)]">
                         {item.taxRate || 0}%
                       </td>
                       <td className="px-3 py-2 text-sm text-right text-[var(--text-primary)]">
-                        {item.totalExclTax?.toFixed(2) || '0.00'} TND
+                        {item.totalExclTax?.toFixed(3) || '0.00'} TND
                       </td>
                       <td className="px-3 py-2 text-sm font-medium text-right text-[var(--text-primary)]">
-                        {item.totalInclTax?.toFixed(2) || '0.00'} TND
+                        {item.totalInclTax?.toFixed(3) || '0.00'} TND
                       </td>
                     </tr>
                   );
@@ -337,7 +339,7 @@ function SaleDetailInner() {
                     Sous-total HT:
                   </td>
                   <td className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                    {sale.totalExclTax?.toFixed(2) || '0.00'} TND
+                    {sale.totalExclTax?.toFixed(3) || '0.00'} TND
                   </td>
                   <td></td>
                 </tr>
@@ -349,7 +351,7 @@ function SaleDetailInner() {
                     TVA:
                   </td>
                   <td className="px-3 py-2 text-right text-sm font-semibold text-[var(--text-primary)]">
-                    {sale.totalTax?.toFixed(2) || '0.00'} TND
+                    {sale.totalTax?.toFixed(3) || '0.00'} TND
                   </td>
                   <td></td>
                 </tr>
@@ -361,7 +363,7 @@ function SaleDetailInner() {
                     Total TTC:
                   </td>
                   <td className="px-3 py-2 text-right text-lg font-bold text-[var(--text-primary)]">
-                    {sale.totalInclTax?.toFixed(2) || '0.00'} TND
+                    {sale.totalInclTax?.toFixed(3) || '0.00'} TND
                   </td>
                   <td></td>
                 </tr>

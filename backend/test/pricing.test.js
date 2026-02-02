@@ -99,11 +99,11 @@ describe('HYBRID Pricing Calculation', () => {
         taxRate: 19,
       });
 
-      // Should be rounded to 2 decimal places
-      const rounded = Math.round(result * 100) / 100;
+      // Should be rounded to 3 decimal places
+      const rounded = Math.round(result * 1000) / 1000;
       expect(result).toBe(rounded);
       expect(result.toString().split('.')[1]?.length || 0).toBeLessThanOrEqual(
-        2
+        3
       );
     });
 

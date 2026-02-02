@@ -347,13 +347,13 @@ function CustomerSalesInner() {
                         {sale.items?.length || 0} article(s)
                       </td>
                       <td className="px-3 py-2 text-sm text-[var(--text-primary)] text-right">
-                        {sale.totalExclTax?.toFixed(2) || '0.00'} TND
+                        {sale.totalExclTax?.toFixed(3) || '0.00'} TND
                       </td>
                       <td className="px-3 py-2 text-sm text-[var(--text-primary)] text-right">
-                        {sale.totalTax?.toFixed(2) || '0.00'} TND
+                        {sale.totalTax?.toFixed(3) || '0.00'} TND
                       </td>
                       <td className="px-3 py-2 text-sm font-medium text-[var(--text-primary)] text-right">
-                        {sale.totalInclTax?.toFixed(2) || '0.00'} TND
+                        {sale.totalInclTax?.toFixed(3) || '0.00'} TND
                       </td>
                       <td className="px-3 py-2 text-center">
                         {getPaymentMethodBadge(sale.paymentMethod)}

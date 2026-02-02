@@ -11,13 +11,9 @@ const productSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    sku: {
-      type: String,
-      required: true,
-      trim: true,
-    },
     manufacturerRef: {
       type: String,
+      required: true,
       trim: true,
     },
     oemRefs: [
@@ -48,8 +44,9 @@ const productSchema = new mongoose.Schema(
     },
     salePrice: {
       type: Number,
-      required: true,
+      required: false, // Calculated on-the-fly, not stored
       min: 0,
+      default: 0,
     },
     purchasePrice: {
       type: Number,
@@ -106,9 +103,9 @@ const productSchema = new mongoose.Schema(
     },
     marginRate: {
       type: Number,
-      default: 20,
+      default: 40,
       min: 0,
-      // Target margin percentage, e.g. 20 = 20%
+      // Target margin percentage, e.g. 40 = 40%
     },
     minMarginOnLastPurchase: {
       type: Number,
@@ -158,8 +155,8 @@ const productSchema = new mongoose.Schema(
 );
 
 // Useful indexes for search
-// Unique SKU per company
-productSchema.index({ companyId: 1, sku: 1 }, { unique: true });
+// Unique manufacturerRef per company
+productSchema.index({ companyId: 1, manufacturerRef: 1 }, { unique: true });
 // Search by name
 productSchema.index({ companyId: 1, name: 1 });
 // Search by manufacturer and OEM references

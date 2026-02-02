@@ -53,7 +53,8 @@ export default function LoginPage() {
         router.push('/');
       }, 100);
     } catch (err) {
-      let errorMessage = 'Login failed. Please check your credentials.';
+      let errorMessage =
+        'Échec de la connexion. Veuillez vérifier vos identifiants.';
       if (err?.message) {
         errorMessage = err.message;
       } else if (err?.data?.error) {
@@ -74,18 +75,18 @@ export default function LoginPage() {
       <div className="max-w-md w-full mx-auto px-4">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome Back
+            Bon retour
           </h1>
           <p className="text-muted-foreground">
-            Sign in to your account to continue
+            Connectez-vous à votre compte pour continuer
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in</CardTitle>
+            <CardTitle>Connexion</CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              Entrez vos identifiants pour accéder à votre compte
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -105,15 +106,15 @@ export default function LoginPage() {
                   control={form.control}
                   name="email"
                   rules={{
-                    required: 'Email is required',
+                    required: "L'email est requis",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address',
+                      message: 'Adresse email invalide',
                     },
                   }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email address</FormLabel>
+                      <FormLabel>Adresse email</FormLabel>
                       <FormControl>
                         <Input
                           type="email"
@@ -131,15 +132,16 @@ export default function LoginPage() {
                   control={form.control}
                   name="password"
                   rules={{
-                    required: 'Password is required',
+                    required: 'Le mot de passe est requis',
                     minLength: {
                       value: 6,
-                      message: 'Password must be at least 6 characters',
+                      message:
+                        'Le mot de passe doit contenir au moins 6 caractères',
                     },
                   }}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel>Mot de passe</FormLabel>
                       <FormControl>
                         <Input
                           type="password"
@@ -168,7 +170,7 @@ export default function LoginPage() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel className="text-sm font-normal">
-                            Remember me
+                            Se souvenir de moi
                           </FormLabel>
                         </div>
                       </FormItem>
@@ -180,7 +182,7 @@ export default function LoginPage() {
                       href="#"
                       className="font-medium text-primary hover:underline"
                     >
-                      Forgot password?
+                      Mot de passe oublié ?
                     </a>
                   </div>
                 </div>
@@ -189,10 +191,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
+                      Connexion en cours...
                     </>
                   ) : (
-                    'Sign in'
+                    'Se connecter'
                   )}
                 </Button>
               </form>
@@ -204,7 +206,7 @@ export default function LoginPage() {
                 className="w-full"
                 onClick={() => router.push('/register')}
               >
-                Create Your Shop
+                Créer votre magasin
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

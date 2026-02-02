@@ -4,7 +4,10 @@ import Product from '../models/product.model.js';
 import PurchaseOrder from '../models/purchaseOrder.model.js';
 import StockMovement from '../models/stockMovement.model.js';
 import { getUserCompanyId } from '../utils/company.js';
-import { calculateRecommendedSalePrice } from '../utils/pricing.js';
+import {
+  calculateRecommendedSalePrice,
+  calculateWeightedAveragePrice,
+} from '../utils/pricing.js';
 
 /**
  * Core reception logic used by:
@@ -200,27 +203,21 @@ export async function receivePurchaseCore(
       const beforeQty = initialStockQty;
       const afterQty = beforeQty + totalQtyToReceive;
 
+      // Calculate CMP (Coût Moyen Pondéré) using the utility function
       const existingPrice = product.purchasePrice || 0;
       const newPrice = orderItem.unitPrice;
-      let newAveragePrice = newPrice;
-      if (beforeQty > 0 && existingPrice > 0) {
-        newAveragePrice =
-          (beforeQty * existingPrice + totalQtyToReceive * newPrice) /
-          (beforeQty + totalQtyToReceive);
-      } else if (beforeQty === 0) {
-        newAveragePrice = newPrice;
-      }
+      const newAveragePrice = calculateWeightedAveragePrice({
+        oldStock: beforeQty,
+        oldPrice: existingPrice,
+        newPurchaseQty: totalQtyToReceive,
+        newPurchasePrice: newPrice,
+      });
+
       product.purchasePrice = newAveragePrice;
       product.lastPurchasePrice = newPrice;
 
-      // Calculate recommended sale price using HYBRID pricing mode
-      // This ensures target margin on average cost while guaranteeing minimum margin on last cost
-      // The price is automatically updated everywhere when a purchase order is received
-      const recommendedPrice = calculateRecommendedSalePrice(product);
-      if (recommendedPrice > 0) {
-        // Round to 2 decimal places for consistency
-        product.salePrice = Math.round(recommendedPrice * 100) / 100;
-      }
+      // Do NOT save salePrice - it will be calculated on-the-fly when retrieving the product
+      // salePrice is calculated dynamically from purchasePrice, marginRate, and taxRate
 
       product.stockQty = afterQty;
 
@@ -319,7 +316,7 @@ export async function receivePurchaseCore(
           'supplierId',
           'name contactName email phone'
         );
-        await purchaseOrder.populate('items.productId', 'sku name');
+        await purchaseOrder.populate('items.productId', 'manufacturerRef name');
         await purchaseOrder.populate('createdBy', 'name email');
         await purchaseOrder.populate('receivedBy', 'name email');
         return { purchaseOrder, stockMovements: [] };
@@ -354,7 +351,7 @@ export async function receivePurchaseCore(
     }
 
     await purchaseOrder.populate('supplierId', 'name contactName email phone');
-    await purchaseOrder.populate('items.productId', 'sku name');
+    await purchaseOrder.populate('items.productId', 'manufacturerRef name');
     await purchaseOrder.populate('createdBy', 'name email');
     await purchaseOrder.populate('receivedBy', 'name email');
 

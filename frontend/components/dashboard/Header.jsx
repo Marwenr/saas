@@ -80,9 +80,27 @@ export default function Header() {
 
   // Get page title from pathname
   const getPageTitle = () => {
-    if (pathname === '/dashboard') return 'Dashboard';
+    const titleMap = {
+      '/dashboard': 'Tableau de bord',
+      '/products': 'Produits',
+      '/inventory': 'Inventaire',
+      '/sales': 'Ventes',
+      '/pos': 'Point de vente',
+      '/analytics': 'Analyses',
+      '/analytics/suppliers': 'Analyses fournisseurs',
+      '/analytics/sales': 'Analyses ventes',
+      '/purchases': 'Achats',
+      '/suppliers': 'Fournisseurs',
+      '/ai-reference-search': 'Recherche correspondances',
+      '/clients': 'Clients',
+      '/users': 'Utilisateurs',
+    };
+
+    if (titleMap[pathname]) return titleMap[pathname];
+
+    if (pathname === '/dashboard') return 'Tableau de bord';
     const segments = pathname.split('/').filter(Boolean);
-    if (segments.length === 0) return 'Dashboard';
+    if (segments.length === 0) return 'Tableau de bord';
     const lastSegment = segments[segments.length - 1];
     return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
   };
@@ -105,7 +123,7 @@ export default function Header() {
             size="icon"
             onClick={toggleSidebar}
             className="md:hidden"
-            aria-label="Toggle sidebar"
+            aria-label="Basculer la barre latérale"
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -121,7 +139,7 @@ export default function Header() {
         <div className="hidden md:flex flex-1 max-w-md mx-4">
           <div className="relative w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input type="search" placeholder="Search..." className="pl-9" />
+            <Input type="search" placeholder="Rechercher..." className="pl-9" />
           </div>
         </div>
 
@@ -131,7 +149,7 @@ export default function Header() {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label="Basculer le thème"
           >
             {darkMode ? (
               <Sun className="h-5 w-5" />
@@ -166,16 +184,16 @@ export default function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => router.push('/dashboard')}>
                 <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+                <span>Profil</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => router.push('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
+                <span>Paramètres</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>Déconnexion</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

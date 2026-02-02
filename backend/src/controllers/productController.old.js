@@ -1,15 +1,21 @@
 /**
  * Product controller for auto parts catalogue
+ *
+ * REFACTORING: Updated to use ProductGlobal + ProductStore architecture
+ * - ProductGlobal: Universal product catalog (no company-specific data)
+ * - ProductStore: Company-specific product data (pricing, stock, suppliers)
+ *
+ * TODO: This controller needs comprehensive updates to work with the new architecture.
+ * See REFACTORING_NOTES.md for details on migration patterns.
  */
 import mongoose from 'mongoose';
 
 import Brand from '../models/brand.model.js';
-import Product from '../models/product.model.js';
+import Product from '../models/product.model.js'; // TODO: Remove after migration
+import ProductGlobal from '../models/productGlobal.model.js';
+import ProductStore from '../models/productStore.model.js';
 import { getCompanyFilter, getUserCompanyId } from '../utils/company.js';
-import {
-  calculateRecommendedSalePrice,
-  calculateWeightedAveragePrice,
-} from '../utils/pricing.js';
+import { calculateRecommendedSalePrice } from '../utils/pricing.js';
 
 function computeRecommendedSupplierId(supplierInfos) {
   if (!Array.isArray(supplierInfos) || supplierInfos.length === 0) return null;
@@ -228,9 +234,6 @@ export async function getProducts(request, reply) {
           product.brand = null;
         }
       }
-
-      // Calculate salePrice on-the-fly (not stored in DB)
-      product.salePrice = calculateRecommendedSalePrice(product);
     }
 
     // Get total count for pagination
@@ -293,9 +296,6 @@ export async function getProduct(request, reply) {
       });
     }
 
-    // Calculate salePrice on-the-fly (not stored in DB)
-    product.salePrice = calculateRecommendedSalePrice(product);
-
     return reply.send({ product });
   } catch (error) {
     request.log.error(error);
@@ -337,6 +337,7 @@ export async function createProduct(request, reply) {
       brand,
       category,
       subCategory,
+      salePrice,
       purchasePrice,
       taxRate,
       marginRate,
@@ -347,15 +348,15 @@ export async function createProduct(request, reply) {
     } = request.body;
 
     // Validate required fields
-    // purchasePrice is required (salePrice is calculated on-the-fly)
+    // salePrice is required UNLESS purchasePrice is provided (it will be calculated)
     if (
       !manufacturerRef ||
       !name ||
-      purchasePrice === undefined ||
-      purchasePrice <= 0
+      (salePrice === undefined && purchasePrice === undefined)
     ) {
       return reply.code(400).send({
-        error: 'manufacturerRef, name, and purchasePrice are required',
+        error:
+          'manufacturerRef, name, and salePrice (or purchasePrice) are required',
       });
     }
 
@@ -405,7 +406,7 @@ export async function createProduct(request, reply) {
       category,
       subCategory,
       purchasePrice,
-      taxRate: taxRate !== undefined ? taxRate : 0, // Default to 0, not 19
+      taxRate: taxRate !== undefined ? taxRate : 19,
       marginRate: marginRate !== undefined ? marginRate : 20,
       minMarginOnLastPurchase:
         minMarginOnLastPurchase !== undefined ? minMarginOnLastPurchase : 10,
@@ -415,16 +416,25 @@ export async function createProduct(request, reply) {
       notes,
     };
 
-    // If purchasePrice is provided, set lastPurchasePrice and CMP
-    // Note: For new products (no stock), purchasePrice is used directly as the initial CMP
-    // The CMP (Coût Moyen Pondéré) will be automatically calculated when receiving purchase orders
-    // salePrice is NOT saved - it will be calculated on-the-fly when retrieving the product
+    // If purchasePrice is provided, set lastPurchasePrice and calculate salePrice using HYBRID mode
     if (purchasePrice !== undefined && purchasePrice > 0) {
       productData.lastPurchasePrice = purchasePrice;
-      // For new products, purchasePrice = CMP (no existing stock to average with)
-      productData.purchasePrice = purchasePrice;
+      // Calculate recommended sale price using HYBRID mode (includes taxRate)
+      const recommendedPrice = calculateRecommendedSalePrice({
+        purchasePrice: purchasePrice,
+        lastPurchasePrice: purchasePrice,
+        marginRate: productData.marginRate,
+        minMarginOnLastPurchase: productData.minMarginOnLastPurchase,
+        taxRate: productData.taxRate,
+      });
+      if (recommendedPrice > 0) {
+        // Round to 3 decimal places for consistency
+        productData.salePrice = Math.round(recommendedPrice * 1000) / 1000;
+      }
+    } else if (salePrice !== undefined) {
+      // If only salePrice is provided (without purchasePrice), use it directly
+      productData.salePrice = salePrice;
     }
-    // Do NOT save salePrice - it will be calculated dynamically
 
     // Create product
     const product = await Product.create(productData);
@@ -439,11 +449,7 @@ export async function createProduct(request, reply) {
       }
     }
 
-    // Calculate salePrice on-the-fly (not stored in DB)
-    const productObj = product.toObject ? product.toObject() : product;
-    productObj.salePrice = calculateRecommendedSalePrice(productObj);
-
-    return reply.code(201).send({ product: productObj });
+    return reply.code(201).send({ product });
   } catch (error) {
     request.log.error(error);
 
@@ -485,6 +491,7 @@ export async function updateProduct(request, reply) {
       brand,
       category,
       subCategory,
+      salePrice,
       purchasePrice,
       taxRate,
       marginRate,
@@ -562,19 +569,29 @@ export async function updateProduct(request, reply) {
     if (tags !== undefined) product.tags = tags;
     if (notes !== undefined) product.notes = notes;
 
-    // Handle purchasePrice - do NOT save salePrice
-    // Note: Manual update of purchasePrice replaces the value directly
-    // The CMP (Coût Moyen Pondéré) is automatically calculated when receiving purchase orders
-    // via purchaseReceiveHelper.js using calculateWeightedAveragePrice()
-    // salePrice is calculated on-the-fly when retrieving the product, not stored
+    // Handle purchasePrice and salePrice with HYBRID pricing
     if (purchasePrice !== undefined) {
       product.purchasePrice = purchasePrice;
-      // If purchasePrice is provided and > 0, update lastPurchasePrice
+      // If purchasePrice is provided and > 0, update lastPurchasePrice and recalculate salePrice
       if (purchasePrice > 0) {
         product.lastPurchasePrice = purchasePrice;
+        // Calculate recommended sale price using HYBRID mode (includes taxRate)
+        const recommendedPrice = calculateRecommendedSalePrice({
+          purchasePrice: product.purchasePrice,
+          lastPurchasePrice: product.lastPurchasePrice,
+          marginRate: product.marginRate,
+          minMarginOnLastPurchase: product.minMarginOnLastPurchase,
+          taxRate: product.taxRate,
+        });
+        if (recommendedPrice > 0) {
+          // Round to 3 decimal places for consistency
+          product.salePrice = Math.round(recommendedPrice * 1000) / 1000;
+        }
       }
+    } else if (salePrice !== undefined) {
+      // If only salePrice is provided (without purchasePrice), update it directly
+      product.salePrice = salePrice;
     }
-    // Do NOT save salePrice - it will be calculated dynamically
 
     await product.save();
 
@@ -588,11 +605,7 @@ export async function updateProduct(request, reply) {
       }
     }
 
-    // Calculate salePrice on-the-fly (not stored in DB)
-    const productObj = product.toObject ? product.toObject() : product;
-    productObj.salePrice = calculateRecommendedSalePrice(productObj);
-
-    return reply.send({ product: productObj });
+    return reply.send({ product });
   } catch (error) {
     request.log.error(error);
 

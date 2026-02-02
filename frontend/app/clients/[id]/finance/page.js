@@ -90,7 +90,7 @@ function CustomerFinanceInner() {
 
     if (amount > selectedInvoice.remainingAmount) {
       alert(
-        `Le montant ne peut pas dépasser le montant restant (${selectedInvoice.remainingAmount.toFixed(2)} TND)`
+        `Le montant ne peut pas dépasser le montant restant (${selectedInvoice.remainingAmount.toFixed(3)} TND)`
       );
       return;
     }

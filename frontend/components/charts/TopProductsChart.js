@@ -15,15 +15,37 @@ import {
  * Top Products Chart Component
  * Displays top products as a bar chart
  */
-export default function TopProductsChart({ data, dataKey = 'totalQty' }) {
+export default function TopProductsChart({
+  // Newer prop name (used by older versions of this component)
+  data,
+  // Current usage across the app (analytics page passes `products`)
+  products,
+  dataKey = 'totalQty',
+  height = 320,
+}) {
   // Use primary color from theme
   const primaryColor = 'hsl(var(--primary))';
 
+  const source = Array.isArray(products)
+    ? products
+    : Array.isArray(data)
+      ? data
+      : [];
+
+  // Normalize to a stable shape for recharts (the backend returns totalQty/totalRevenue)
+  const chartData = source.map(item => ({
+    name: item?.name || item?.manufacturerRef || 'Unknown',
+    totalQty: Number(item?.totalQty ?? item?.quantity ?? 0),
+    totalRevenue: Number(item?.totalRevenue ?? item?.revenue ?? 0),
+  }));
+
+  const valueKey = dataKey === 'totalRevenue' ? 'totalRevenue' : 'totalQty';
+
   return (
-    <div className="w-full h-full">
+    <div className="w-full" style={{ height }}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={data}
+          data={chartData}
           margin={{
             top: 5,
             right: 30,
@@ -54,9 +76,9 @@ export default function TopProductsChart({ data, dataKey = 'totalQty' }) {
           />
           <Legend />
           <Bar
-            dataKey={dataKey === 'totalQty' ? 'quantity' : 'revenue'}
+            dataKey={valueKey}
             fill={primaryColor}
-            name={dataKey === 'totalQty' ? 'Quantity' : 'Revenue'}
+            name={valueKey === 'totalQty' ? 'Quantity' : 'Revenue'}
           />
         </BarChart>
       </ResponsiveContainer>

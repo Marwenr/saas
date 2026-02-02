@@ -67,6 +67,7 @@ export async function createPurchaseOrder(request, reply) {
     // Validate and process items
     const processedItems = [];
     let totalAmount = 0;
+    let totalAmountVatIncluded = 0;
 
     for (const item of items) {
       const { productId, quantity, unitPrice, taxRate } = item;
@@ -98,7 +99,9 @@ export async function createPurchaseOrder(request, reply) {
       }
 
       const itemTaxRate = taxRate !== undefined ? taxRate : 0;
-      const subtotal = quantity * unitPrice * (1 + itemTaxRate / 100);
+      // subtotal is stored as EXCLUDING VAT (HT) to match product routes expectations (totalExclTax)
+      const subtotal = quantity * unitPrice;
+      const subtotalVatIncluded = subtotal * (1 + itemTaxRate / 100);
 
       processedItems.push({
         productId: new mongoose.Types.ObjectId(productId),
@@ -110,6 +113,7 @@ export async function createPurchaseOrder(request, reply) {
       });
 
       totalAmount += subtotal;
+      totalAmountVatIncluded += subtotalVatIncluded;
     }
 
     // Generate order number if not provided
@@ -148,6 +152,7 @@ export async function createPurchaseOrder(request, reply) {
       expectedDate: expectedDate ? new Date(expectedDate) : undefined,
       items: processedItems,
       totalAmount,
+      totalAmountVatIncluded,
       notes,
       createdBy: new mongoose.Types.ObjectId(request.user.userId),
       isDeleted: false, // Explicitly set to false to ensure it's not undefined
@@ -178,7 +183,7 @@ export async function createPurchaseOrder(request, reply) {
         'supplierId',
         'name contactName email phone'
       );
-      await purchaseOrder.populate('items.productId', 'sku name');
+      await purchaseOrder.populate('items.productId', 'manufacturerRef name');
       await purchaseOrder.populate('createdBy', 'name email');
     }
 
@@ -276,7 +281,7 @@ export async function getPurchaseOrders(request, reply) {
     // Get purchase orders
     const purchaseOrders = await PurchaseOrder.find(filter)
       .populate('supplierId', 'name contactName email phone')
-      .populate('items.productId', 'sku name')
+      .populate('items.productId', 'manufacturerRef name')
       .populate('createdBy', 'name email')
       .populate('receivedBy', 'name email')
       .sort({ createdAt: -1 })
@@ -329,7 +334,10 @@ export async function getPurchaseOrder(request, reply) {
         'supplierId',
         'name contactName email phone address city country'
       )
-      .populate('items.productId', 'sku name salePrice purchasePrice stockQty')
+      .populate(
+        'items.productId',
+        'manufacturerRef name salePrice purchasePrice stockQty'
+      )
       .populate('createdBy', 'name email')
       .populate('receivedBy', 'name email')
       .lean();

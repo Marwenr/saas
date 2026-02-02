@@ -9,14 +9,14 @@ import GlobalAuthGuard from '../components/GlobalAuthGuard';
  * Assembles sidebar + container (no top navbar)
  */
 export const metadata = {
-  title: 'CloudERP - Manage Your Entire Business From One Platform',
+  title: 'CloudERP - Gérez toute votre entreprise depuis une seule plateforme',
   description:
-    'A smart ERP system that unifies sales, accounting, HR, and inventory into one powerful dashboard',
+    "Un système ERP intelligent qui unifie les ventes, la comptabilité, les RH et l'inventaire dans un tableau de bord puissant",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body>
         <Providers>
           <GlobalAuthGuard>

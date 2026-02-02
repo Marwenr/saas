@@ -57,7 +57,7 @@ function SalesAnalyticsPage() {
   };
 
   const formatCurrency = value => {
-    return `${(value || 0).toFixed(2)} TND`;
+    return `${(value || 0).toFixed(3)} TND`;
   };
 
   const formatNumber = value => {
@@ -220,7 +220,7 @@ function SalesAnalyticsPage() {
                     Product
                   </th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-foreground border-b border-border">
-                    SKU
+                    Réf. fabricant
                   </th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-foreground border-b border-border">
                     Quantity
@@ -271,7 +271,7 @@ function SalesAnalyticsPage() {
                         {product.name || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {product.sku || '-'}
+                        {product.manufacturerRef || '-'}
                       </td>
                       <td className="px-4 py-3 text-sm text-right text-foreground font-medium">
                         {formatNumber(product.totalQty)}

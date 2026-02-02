@@ -43,17 +43,17 @@ export default function Sidebar() {
 
   // Main navigation items (always visible at top)
   const mainNavItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/products', label: 'Products', icon: Package },
-    { href: '/inventory', label: 'Inventory', icon: Warehouse },
-    { href: '/sales', label: 'Sales', icon: DollarSign },
-    { href: '/pos', label: 'POS', icon: CreditCard },
+    { href: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+    { href: '/products', label: 'Produits', icon: Package },
+    { href: '/inventory', label: 'Inventaire', icon: Warehouse },
+    { href: '/sales', label: 'Ventes', icon: DollarSign },
+    { href: '/pos', label: 'Point de vente', icon: CreditCard },
   ];
 
   const analyticsItems = [
-    { href: '/analytics', label: 'Analytics', icon: TrendingUp },
-    { href: '/analytics/suppliers', label: 'Suppliers Analytics', icon: Tag },
-    { href: '/analytics/sales', label: 'Sales Analytics', icon: BarChart3 },
+    { href: '/analytics', label: 'Analyses', icon: TrendingUp },
+    { href: '/analytics/suppliers', label: 'Analyses fournisseurs', icon: Tag },
+    { href: '/analytics/sales', label: 'Analyses ventes', icon: BarChart3 },
   ];
 
   const stockManagementItems = [
@@ -76,11 +76,40 @@ export default function Sidebar() {
     { href: '/users', label: 'Gestion utilisateurs', icon: UserCog },
   ];
 
+  // Collect all hrefs to find the most specific match
+  const allHrefs = [
+    ...mainNavItems.map(item => item.href),
+    ...analyticsItems.map(item => item.href),
+    ...stockManagementItems.map(item => item.href),
+    ...salesItems.map(item => item.href),
+    ...managementItems.map(item => item.href),
+  ];
+
   const isActive = href => {
     if (href === '/dashboard' || href === '/') {
       return pathname === '/dashboard' || pathname === '/';
     }
-    return pathname?.startsWith(href);
+
+    // Check if pathname exactly matches the href
+    if (pathname === href) {
+      return true;
+    }
+
+    // Check if pathname starts with href + '/'
+    // But only if no more specific route matches
+    if (pathname?.startsWith(href + '/')) {
+      // Find if there's a more specific route that also matches
+      const hasMoreSpecificMatch = allHrefs.some(otherHref => {
+        if (otherHref === href) return false; // Skip itself
+        // Check if otherHref is more specific (longer) and also matches
+        return otherHref.length > href.length && pathname.startsWith(otherHref);
+      });
+
+      // Only active if no more specific route matches
+      return !hasMoreSpecificMatch;
+    }
+
+    return false;
   };
 
   const NavLink = ({ href, label, icon: Icon, isActive: active }) => (
@@ -200,7 +229,7 @@ export default function Sidebar() {
               <Separator />
 
               {/* Analytics Section */}
-              <NavSection title="Analytics" items={analyticsItems} />
+              <NavSection title="Analyses" items={analyticsItems} />
 
               <Separator />
 

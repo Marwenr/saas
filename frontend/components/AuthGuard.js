@@ -30,7 +30,7 @@ export default function AuthGuard({ children }) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          <div className="text-muted-foreground">Loading...</div>
+          <div className="text-muted-foreground">Chargement...</div>
         </div>
       </div>
     );
