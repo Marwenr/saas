@@ -56,14 +56,14 @@ function PurchasesPage() {
           statusFilter && statusFilter !== 'all' ? statusFilter : undefined,
       });
       setPurchaseOrders(data.purchaseOrders || []);
-      setPagination(data.pagination || pagination);
+      setPagination(prev => data.pagination || prev);
     } catch (err) {
       console.error('Failed to load purchase orders:', err);
       setError(err.message || 'Failed to load purchase orders');
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, statusFilter]);
+  }, [pagination.page, pagination.limit, statusFilter]);
 
   // Load purchase orders
   useEffect(() => {

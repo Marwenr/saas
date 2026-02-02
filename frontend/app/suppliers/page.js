@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 import AuthGuard from '../../components/AuthGuard';
@@ -49,14 +49,14 @@ function SuppliersPage() {
         search: search,
       });
       setSuppliers(data.suppliers || []);
-      setPagination(data.pagination || pagination);
+      setPagination(prev => data.pagination || prev);
     } catch (err) {
       console.error('Failed to load suppliers:', err);
       setError(err.message || 'Failed to load suppliers');
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, search]);
+  }, [pagination.page, pagination.limit, search]);
 
   // Load suppliers
   useEffect(() => {

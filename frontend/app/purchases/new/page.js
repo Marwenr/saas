@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileText, Loader2 } from 'lucide-react';
 
@@ -125,7 +125,7 @@ function NewPurchaseOrderPage() {
     } else {
       setSearchResults([]);
     }
-  }, [searchQuery]);
+  }, [searchQuery, performSearch]);
 
   // Debounced supplier search
   useEffect(() => {
@@ -157,7 +157,7 @@ function NewPurchaseOrderPage() {
       // If no search query, show all active suppliers
       setSupplierSearchResults(suppliers.filter(s => s.isActive !== false));
     }
-  }, [supplierSearchQuery, suppliers]);
+  }, [supplierSearchQuery, suppliers, performSupplierSearch]);
 
   const loadSuppliers = async () => {
     try {
@@ -180,7 +180,7 @@ function NewPurchaseOrderPage() {
     }
   };
 
-  const performSupplierSearch = async () => {
+  const performSupplierSearch = useCallback(async () => {
     try {
       setSupplierSearchLoading(true);
       const data = await fetchSuppliers({
@@ -195,7 +195,7 @@ function NewPurchaseOrderPage() {
     } finally {
       setSupplierSearchLoading(false);
     }
-  };
+  }, [supplierSearchQuery]);
 
   const handleSupplierCreated = async supplier => {
     // Reload suppliers list
@@ -215,7 +215,7 @@ function NewPurchaseOrderPage() {
     setShowNewSupplierModal(false);
   };
 
-  const performSearch = async () => {
+  const performSearch = useCallback(async () => {
     try {
       setSearchLoading(true);
       const data = await fetchProducts({
@@ -230,7 +230,7 @@ function NewPurchaseOrderPage() {
     } finally {
       setSearchLoading(false);
     }
-  };
+  }, [searchQuery]);
 
   const handleFormChange = e => {
     const { name, value } = e.target;

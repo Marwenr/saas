@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -43,9 +43,9 @@ function PurchaseOrderDetailPage() {
     if (!authLoading && isAuthenticated && poId) {
       loadPurchaseOrder();
     }
-  }, [authLoading, isAuthenticated, poId]);
+  }, [authLoading, isAuthenticated, poId, loadPurchaseOrder]);
 
-  const loadPurchaseOrder = async () => {
+  const loadPurchaseOrder = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -67,7 +67,7 @@ function PurchaseOrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [poId]);
 
   const handleReceiptQuantityChange = (itemIndex, value) => {
     const qty = parseFloat(value) || 0;

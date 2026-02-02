@@ -52,14 +52,20 @@ function SalesPage() {
         paymentMethod: paymentMethodFilter || undefined,
       });
       setSales(data.sales || []);
-      setPagination(data.pagination || pagination);
+      setPagination(prev => data.pagination || prev);
     } catch (err) {
       console.error('Failed to load sales:', err);
       setError(err.message || 'Failed to load sales');
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, paymentMethodFilter, startDate, endDate]);
+  }, [
+    pagination.page,
+    pagination.limit,
+    paymentMethodFilter,
+    startDate,
+    endDate,
+  ]);
 
   // Load sales
   useEffect(() => {

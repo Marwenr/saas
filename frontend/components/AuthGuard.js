@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '../lib/useAuth';
 import { Loader2 } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function AuthGuard({ children }) {
   const pathname = usePathname();
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/register', '/'];
+  const publicRoutes = useMemo(() => ['/login', '/register', '/'], []);
 
   useEffect(() => {
     if (!loading && !isAuthenticated && !publicRoutes.includes(pathname)) {
