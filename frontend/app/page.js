@@ -47,7 +47,7 @@ export default function LandingPage() {
         {/* Sub-headline */}
         <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 mb-12 max-w-3xl mx-auto px-4 font-normal">
           Un système ERP intelligent qui unifie les ventes, la comptabilité, les
-          RH et l'inventaire dans un tableau de bord puissant
+          RH et l&apos;inventaire dans un tableau de bord puissant
         </p>
 
         {/* CTA Buttons */}

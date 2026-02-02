@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '../../components/AuthGuard';
 import ProductForm from '../../components/ProductForm';
@@ -78,11 +78,30 @@ function ProductsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await fetchProducts({
+        page: pagination.page,
+        limit: pagination.limit,
+        search: search,
+      });
+      setProducts(data.products || []);
+      setPagination(prev => data.pagination || prev);
+    } catch (err) {
+      console.error('Failed to load products:', err);
+      setError(err.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.limit, search]);
+
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       loadProducts();
     }
-  }, [authLoading, isAuthenticated, pagination.page, search]);
+  }, [authLoading, isAuthenticated, loadProducts]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -99,26 +118,7 @@ function ProductsPage() {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [authLoading, isAuthenticated]);
-
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchProducts({
-        page: pagination.page,
-        limit: pagination.limit,
-        search: search,
-      });
-      setProducts(data.products || []);
-      setPagination(data.pagination || pagination);
-    } catch (err) {
-      console.error('Failed to load products:', err);
-      setError(err.message || 'Failed to load products');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [authLoading, isAuthenticated, loadProducts]);
 
   const handleSearch = e => {
     e.preventDefault();

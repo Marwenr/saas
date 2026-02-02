@@ -360,7 +360,7 @@ function ProductAnalyticsInner() {
 
         <div className="p-6 border border-border rounded-lg bg-card">
           <div className="text-lg font-semibold text-foreground mb-3">
-            Dernières lignes d'achat
+            Dernières lignes d&apos;achat
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
@@ -417,7 +417,7 @@ function ProductAnalyticsInner() {
                       className="px-3 py-4 text-center text-muted-foreground"
                       colSpan={6}
                     >
-                      Aucune ligne d'achat
+                      Aucune ligne d&apos;achat
                     </td>
                   </tr>
                 )}

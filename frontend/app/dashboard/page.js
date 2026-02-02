@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import AuthGuard from '../../components/AuthGuard';
 import { Button } from '../../components/ui/button';
 import {
@@ -56,13 +56,7 @@ function DashboardPage() {
   const [to, setTo] = useState('');
   const [topProductsLimit, setTopProductsLimit] = useState(10);
 
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadData();
-    }
-  }, [authLoading, isAuthenticated, period, from, to, topProductsLimit]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -102,7 +96,13 @@ function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period, from, to, topProductsLimit]);
+
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadData();
+    }
+  }, [authLoading, isAuthenticated, loadData]);
 
   const formatCurrency = value => {
     return `${(value || 0).toFixed(3)} TND`;
@@ -147,8 +147,8 @@ function DashboardPage() {
         <div>
           <h1 className="text-4xl font-bold tracking-tight">Tableau de bord</h1>
           <p className="text-muted-foreground mt-1">
-            Vue d'ensemble de vos ventes, alertes de stock et produits les plus
-            vendus
+            Vue d&apos;ensemble de vos ventes, alertes de stock et produits les
+            plus vendus
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -190,7 +190,7 @@ function DashboardPage() {
                   <SelectValue placeholder="Sélectionner une période" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="day">Aujourd'hui</SelectItem>
+                  <SelectItem value="day">Aujourd&apos;hui</SelectItem>
                   <SelectItem value="week">Cette semaine</SelectItem>
                   <SelectItem value="month">Ce mois</SelectItem>
                   <SelectItem value="year">Cette année</SelectItem>
@@ -247,7 +247,7 @@ function DashboardPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-2xl font-bold tracking-tight">
-                Vue d'ensemble des ventes
+                Vue d&apos;ensemble des ventes
               </h2>
               <p className="text-muted-foreground mt-1">
                 Indicateurs clés de performance pour votre entreprise

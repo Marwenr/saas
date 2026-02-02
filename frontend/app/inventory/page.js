@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '../../components/AuthGuard';
 import StockAdjustmentForm from '../../components/StockAdjustmentForm';
@@ -41,14 +41,7 @@ function InventoryPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load products
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadProducts();
-    }
-  }, [authLoading, isAuthenticated, pagination.page, lowStockOnly]);
-
-  const loadProducts = async () => {
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -60,7 +53,7 @@ function InventoryPage() {
           limit: pagination.limit,
         });
         setProducts(data.products || []);
-        setPagination(data.pagination || pagination);
+        setPagination(prev => data.pagination || prev);
       } else {
         data = await fetchProducts({
           page: pagination.page,
@@ -68,7 +61,7 @@ function InventoryPage() {
           search: '',
         });
         setProducts(data.products || []);
-        setPagination(data.pagination || pagination);
+        setPagination(prev => data.pagination || prev);
       }
     } catch (err) {
       console.error('Failed to load products:', err);
@@ -76,7 +69,14 @@ function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, lowStockOnly]);
+
+  // Load products
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadProducts();
+    }
+  }, [authLoading, isAuthenticated, loadProducts]);
 
   const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= pagination.pages) {
