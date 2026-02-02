@@ -22,7 +22,7 @@ export default function AuthGuard({ children }) {
     if (!loading && !isAuthenticated && !publicRoutes.includes(pathname)) {
       router.push('/login');
     }
-  }, [loading, isAuthenticated, pathname, router]);
+  }, [loading, isAuthenticated, pathname, router, publicRoutes]);
 
   // Show loading state while checking auth
   if (loading) {

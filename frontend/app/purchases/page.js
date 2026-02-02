@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -45,14 +45,7 @@ function PurchasesPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load purchase orders
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadPurchaseOrders();
-    }
-  }, [authLoading, isAuthenticated, pagination.page, statusFilter]);
-
-  const loadPurchaseOrders = async () => {
+  const loadPurchaseOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,7 +63,14 @@ function PurchasesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, statusFilter]);
+
+  // Load purchase orders
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadPurchaseOrders();
+    }
+  }, [authLoading, isAuthenticated, loadPurchaseOrders]);
 
   const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= pagination.pages) {

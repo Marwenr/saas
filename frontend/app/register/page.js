@@ -112,7 +112,7 @@ export default function RegisterPage() {
                 {/* Company Information */}
                 <div>
                   <h2 className="text-xl font-semibold mb-4 pb-2 border-b">
-                    Informations de l'entreprise
+                    Informations de l&apos;entreprise
                   </h2>
                   <div className="space-y-4">
                     <FormField
@@ -122,7 +122,7 @@ export default function RegisterPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Nom de l'entreprise{' '}
+                            Nom de l&apos;entreprise{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
@@ -150,7 +150,7 @@ export default function RegisterPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>
-                            Email de l'entreprise{' '}
+                            Email de l&apos;entreprise{' '}
                             <span className="text-destructive">*</span>
                           </FormLabel>
                           <FormControl>
@@ -171,7 +171,7 @@ export default function RegisterPage() {
                       name="companyPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Téléphone de l'entreprise</FormLabel>
+                          <FormLabel>Téléphone de l&apos;entreprise</FormLabel>
                           <FormControl>
                             <Input
                               type="tel"

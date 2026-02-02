@@ -39,14 +39,7 @@ function SuppliersPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load suppliers
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadSuppliers();
-    }
-  }, [authLoading, isAuthenticated, pagination.page, search]);
-
-  const loadSuppliers = async () => {
+  const loadSuppliers = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -63,7 +56,14 @@ function SuppliersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, search]);
+
+  // Load suppliers
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadSuppliers();
+    }
+  }, [authLoading, isAuthenticated, loadSuppliers]);
 
   const handleSearch = e => {
     e.preventDefault();

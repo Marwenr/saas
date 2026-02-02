@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { createProduct, updateProduct } from '../lib/products';
 import { fetchBrands, createBrand } from '../lib/brands';
@@ -75,7 +75,7 @@ export default function ProductForm({
   const brand = form.watch('brand');
 
   // Function to recalculate sale price - use form.getValues to get latest values
-  const recalculateSalePrice = () => {
+  const recalculateSalePrice = useCallback(() => {
     const purchaseValue = form.getValues('purchasePrice');
     const marginValue = form.getValues('marginRate');
     const taxValue = form.getValues('taxRate');
@@ -107,7 +107,7 @@ export default function ProductForm({
         form.setValue('salePrice', priceTTC.toFixed(3), { shouldDirty: false });
       }
     }
-  };
+  }, [form]);
 
   // Load product data if editing or if initial data is provided
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function ProductForm({
       recalculateSalePrice();
     }, 50);
     return () => clearTimeout(timer);
-  }, [purchasePrice, marginRate, taxRate, form]);
+  }, [purchasePrice, marginRate, taxRate, recalculateSalePrice]);
 
   const handleBrandChange = value => {
     setBrandSearchTerm(value);

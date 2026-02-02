@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -40,21 +40,7 @@ function SalesPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load sales
-  useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      loadSales();
-    }
-  }, [
-    authLoading,
-    isAuthenticated,
-    pagination.page,
-    paymentMethodFilter,
-    startDate,
-    endDate,
-  ]);
-
-  const loadSales = async () => {
+  const loadSales = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -73,7 +59,14 @@ function SalesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, paymentMethodFilter, startDate, endDate]);
+
+  // Load sales
+  useEffect(() => {
+    if (!authLoading && isAuthenticated) {
+      loadSales();
+    }
+  }, [authLoading, isAuthenticated, loadSales]);
 
   const handlePageChange = newPage => {
     if (newPage >= 1 && newPage <= pagination.pages) {
